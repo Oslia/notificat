@@ -1,0 +1,13 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.adapterTargetName": "esp32s3",
+    "idf.customExtraVars": {},
+    "idf.espIdfPath": "/opt/esp/idf",
+    "idf.openOcdConfigs": [
+        "board/esp32s3-builtin.cfg"
+    ],
+    "idf.pythonBinPath": "/opt/esp/python_env/idf5.5_py3.12_env/bin/python",
+    "idf.toolsPath": "/opt/esp",
+    "idf.port": "/dev/ttyACM0",
+    "idf.flashType": "JTAG"
+}

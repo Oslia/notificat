@@ -9,5 +9,10 @@
     "idf.pythonBinPath": "/opt/esp/python_env/idf5.5_py3.12_env/bin/python",
     "idf.toolsPath": "/opt/esp",
     "idf.port": "/dev/ttyACM0",
-    "idf.flashType": "JTAG"
+    "idf.flashType": "JTAG",
+    "files.associations": {
+        "ctime": "cpp",
+        "chrono": "cpp"
+    },
+    "editor.insertSpaces": false
 }

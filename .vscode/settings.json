@@ -11,8 +11,8 @@
     "idf.port": "/dev/ttyACM0",
     "idf.flashType": "JTAG",
     "files.associations": {
-        "ctime": "cpp",
-        "chrono": "cpp"
+        "*.cpp": "cpp",
+        "*.hpp": "cpp"
     },
     "editor.insertSpaces": false
 }

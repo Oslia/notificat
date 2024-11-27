@@ -1,5 +1,6 @@
 ## IDF Component Manager Manifest File
 dependencies:
+  espressif/jsmn: "^1.1.0"
   espressif/libpng: "^1.6.39~1"
   espressif/freetype: "^2.13.0~3"
   espressif/m5stack_core_s3: "^1.1.1~1"

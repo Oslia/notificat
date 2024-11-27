@@ -12,13 +12,14 @@
 #include "esp_vfs.h"
 #include "esp_vfs_fat.h"
 #include "sdkconfig.h"
-#include "clock.hpp"
-#include "wifi.hpp"
+#include "network.hpp"
+#include "nvs_flash.h"
 
 static const char *TAG = "notificat";
-
+#define EXAMPLE_ESP_WIFI_SSID      "241147923271"
+#define EXAMPLE_ESP_WIFI_PASS      "52279344"
 #define LOG_MEM_INFO    (1)
-
+extern void mytest(void);
 const char *base_path = "/spiflash";
 static wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
 FATFS* fs;
@@ -28,6 +29,7 @@ void app_main(void)
     time_t now;
 	char strftime_buf[64];
     struct tm timeinfo;
+
     ESP_LOGI(TAG, "Mounting FAT filesystem");
     // To mount device we need name of device partition, define base_path
     // and allow format partition in case if it is new one and was not formatted before
@@ -44,7 +46,10 @@ void app_main(void)
         ESP_LOGE(TAG, "Failed to mount FATFS (%s)", esp_err_to_name(err));
         return;
     }
-
+    ESP_ERROR_CHECK(nvs_flash_init());
+    Network& network = Network::Instance();
+    network.ConnectWifi(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+    mytest();
     /* Initialize display and LVGL */
     bsp_display_start();
 
@@ -67,9 +72,7 @@ void app_main(void)
     // lv_demo_stress();       /* A stress test for LVGL. */
     // lv_demo_benchmark();    /* A demo to measure the performance of LVGL or to compare different settings. */
     bsp_display_unlock();
-    wifi_init();
-    
-    Clock clock;
+
 #if LOG_MEM_INFO
     static char buffer[128];    /* Make sure buffer is enough for `sprintf` */
     while (1) {

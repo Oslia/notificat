@@ -12,7 +12,9 @@
     "idf.flashType": "JTAG",
     "files.associations": {
         "*.cpp": "cpp",
-        "*.hpp": "cpp"
+        "*.hpp": "cpp",
+        "*.h": "cpp",
+        "*.c": "cpp",
     },
     "editor.insertSpaces": false
 }

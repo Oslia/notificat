@@ -14,7 +14,7 @@
 #include "sdkconfig.h"
 #include "network.hpp"
 #include "nvs_flash.h"
-
+#include "lv_demos.h"
 static const char *TAG = "notificat";
 #define EXAMPLE_ESP_WIFI_SSID      "241147923271"
 #define EXAMPLE_ESP_WIFI_PASS      "52279344"
@@ -47,12 +47,12 @@ void app_main(void)
         return;
     }
     ESP_ERROR_CHECK(nvs_flash_init());
-    Network& network = Network::Instance();
-    network.ConnectWifi(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
-    mytest();
+    //Network& network = Network::Instance();
+    //network.ConnectWifi(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+    //mytest();
     /* Initialize display and LVGL */
     bsp_display_start();
-
+    
 #if CONFIG_BSP_DISPLAY_LVGL_AVOID_TEAR
     ESP_LOGI(TAG, "Avoid lcd tearing effect");
 #if CONFIG_BSP_DISPLAY_LVGL_FULL_REFRESH
@@ -68,7 +68,7 @@ void app_main(void)
     ESP_LOGI(TAG, "Display LVGL demo");
     bsp_display_lock(0);
     // lv_demo_widgets();      /* A widgets example */
-    // lv_demo_music();        /* A modern, smartphone-like music player demo. */
+    lv_demo_music();        /* A modern, smartphone-like music player demo. */
     // lv_demo_stress();       /* A stress test for LVGL. */
     // lv_demo_benchmark();    /* A demo to measure the performance of LVGL or to compare different settings. */
     bsp_display_unlock();

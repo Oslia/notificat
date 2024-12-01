@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 idf_component_get_property(lvgl_lib lvgl__lvgl COMPONENT_LIB)
 idf_component_get_property(freetype_lib espressif__freetype COMPONENT_LIB)
 target_link_libraries(${lvgl_lib} PUBLIC ${freetype_lib})
+target_compile_definitions(${lvgl_lib} PUBLIC LV_ATTRIBUTE_LARGE_RAM_ARRAY=EXT_RAM_BSS_ATTR)
 
 idf_component_get_property(fatfs_lib fatfs COMPONENT_LIB)
 target_link_libraries(${lvgl_lib} PUBLIC ${fatfs_lib})

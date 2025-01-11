@@ -2,6 +2,22 @@
 
 !main
 !main/*
+!main/apps
+!main/apps/include
+!main/apps/include/*
+!main/apps/alarm
+!main/apps/alarm/*
+!main/apps/weather
+!main/apps/weather/*
+!main/mylib
+!main/mylib/*
+!main/mylib/include
+!main/mylib/include/*
+!main/system/*
+!main/system/include/*
+!main/system/app_mng/*
+!main/system/http/*
+!main/system/network/*
 !.devcontainer
 !.devcontainer/*
 !.vscode

@@ -14,7 +14,9 @@
 #include "sdkconfig.h"
 #include "network.hpp"
 #include "nvs_flash.h"
-#include "lv_demos.h"
+#include "app_mng.hpp"
+#include "alarm.hpp"
+
 static const char *TAG = "notificat";
 #define EXAMPLE_ESP_WIFI_SSID      "241147923271"
 #define EXAMPLE_ESP_WIFI_PASS      "52279344"
@@ -66,12 +68,15 @@ void app_main(void)
     bsp_display_backlight_on();
     
     ESP_LOGI(TAG, "Display LVGL demo");
-    bsp_display_lock(0);
+    //bsp_display_lock(0);
     // lv_demo_widgets();      /* A widgets example */
-    lv_demo_music();        /* A modern, smartphone-like music player demo. */
+    // lv_demo_music();        /* A modern, smartphone-like music player demo. */
     // lv_demo_stress();       /* A stress test for LVGL. */
     // lv_demo_benchmark();    /* A demo to measure the performance of LVGL or to compare different settings. */
-    bsp_display_unlock();
+    //bsp_display_unlock();
+    AppMng& mng = AppMng::Instance();
+    Alarm alarm;
+    //alarm.Run();
 
 #if LOG_MEM_INFO
     static char buffer[128];    /* Make sure buffer is enough for `sprintf` */

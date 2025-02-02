@@ -13,7 +13,6 @@ public:
 	AppMng();
 	~AppMng();
 	int RegisterApp(App* app);
-	
 private:
 	AppMngPriv* impl;
 	friend Singleton;

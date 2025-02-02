@@ -9,8 +9,10 @@ public:
 	~Alarm();
 	void OnStart() override;
 	void OnStop() override;
-	void Run() override;
+	lv_obj_t* Run() override;
 private:
+	lv_obj_t* screen;
+	lv_obj_t* time;
 };
 
 #endif	// APPS_ALARM_HPP_

@@ -76,8 +76,8 @@ void app_main(void)
     //bsp_display_unlock();
     AppMng& mng = AppMng::Instance();
     Alarm alarm;
-    //alarm.Run();
-
+    mng.RegisterApp(&alarm);
+    
 #if LOG_MEM_INFO
     static char buffer[128];    /* Make sure buffer is enough for `sprintf` */
     while (1) {
@@ -98,4 +98,5 @@ void app_main(void)
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 #endif
+    ESP_ERROR_CHECK(esp_vfs_fat_spiflash_unmount_rw_wl(base_path, s_wl_handle));
 }

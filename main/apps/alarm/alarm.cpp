@@ -4,13 +4,16 @@
 #include "app_mng.hpp"
 
 Alarm::Alarm() {
-    AppMng& app_mng_hdlr = AppMng::Instance();
-    app_mng_hdlr.RegisterApp(this);
+    screen = lv_obj_create(NULL);
+    time = lv_label_create(screen);
+    icon = "A:rsc/notificat.bmp";
+    name = "Alarm";
 }
 
 
 Alarm::~Alarm() {
-
+    lv_obj_delete(screen);
+    lv_obj_delete(time);
 }
 
 
@@ -24,6 +27,7 @@ void Alarm::OnStop() {
 }
 
 
-void Alarm::Run() {
-
+lv_obj_t* Alarm::Run() {
+    lv_label_set_text(time, "17:00");
+    return screen;
 }

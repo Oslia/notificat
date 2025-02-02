@@ -11,25 +11,34 @@
 
 class AppList: public App {
 public:
+	AppList();
+	~AppList();
 	void OnCreate() override;
 	void OnStart() override;
 	void OnStop() override;
 	void OnDestroy() override;
-	void Run() override;
-private:
+	lv_obj_t* Run() override;
 	lv_obj_t* tile_view;
+	std::vector<lv_obj_t*> tile;
+private:
 };
 
 class AppMngPriv {
 public:
 	AppMngPriv();
+
 	static void Task(void*);
 	static void SetApp(int app);
+	
 	static std::vector<std::pair<App*, AppState>> apps;
 	static SemaphoreHandle_t mutex;
 	static int curr_app;
 	static int next_app;
+
 	void Manager();
+
+	AppList* list;
+
 	friend AppList;
 };
 

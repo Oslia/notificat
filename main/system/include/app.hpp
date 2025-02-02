@@ -12,8 +12,8 @@ enum class AppState{
 class App {
 public:
 	std::string name;
-	lv_obj_t * img_icon;
-	virtual void Run() {}
+	char* icon;
+	virtual lv_obj_t* Run() = 0;
 	virtual void OnCreate() {}
 	virtual void OnStart() {}
 	virtual void OnStop() {}

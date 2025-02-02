@@ -6,19 +6,17 @@
 #include "app_mng.hpp"
 #include "bsp/esp-bsp.h"
 
+#include "esp_log.h"
+
 SemaphoreHandle_t AppMngPriv::mutex = xSemaphoreCreateMutex();
 int AppMngPriv::curr_app = APP_MNG_NULL;
 int AppMngPriv::next_app = APP_MNG_APP_LIST;
 std::vector<std::pair<App*, AppState>> AppMngPriv::apps;
 
 AppMng::AppMng() {
-	AppList* list = new AppList;
-	assert(list != nullptr);
-	RegisterApp(list);
-	
 	impl = new AppMngPriv;
 	assert(impl->mutex != NULL);
-	xTaskCreate(impl->Task, "AppMng", 2048, impl, 1, NULL);
+	xTaskCreate(impl->Task, "AppMng", 4096, impl, 1, NULL);
 }
 
 
@@ -31,7 +29,9 @@ AppMng::~AppMng() {
 
 
 AppMngPriv::AppMngPriv() {
-
+	list = new AppList;
+	assert(list != nullptr);
+	apps.emplace_back(list, AppState::DESTROYED);
 }
 
 void AppMngPriv::Task(void* arg) {
@@ -47,7 +47,9 @@ void AppMngPriv::SetApp(int app) {
 	next_app = app;
 }
 
+
 void AppMngPriv::Manager(void) {
+	lv_obj_t* scr;
 	bsp_display_lock(0);
 	xSemaphoreTake(mutex, portMAX_DELAY);
 	
@@ -70,7 +72,10 @@ void AppMngPriv::Manager(void) {
 	}
 
 	if (AppState::RUNNING == apps[curr_app].second) {
-		apps[curr_app].first->Run();
+		scr = apps[curr_app].first->Run();
+		if (nullptr != scr) {
+			lv_scr_load(scr);
+		}
 	}
 
 	xSemaphoreGive(mutex);
@@ -79,25 +84,44 @@ void AppMngPriv::Manager(void) {
 
 
 int AppMng::RegisterApp(App* app) {
+	lv_obj_t* img;
+	lv_obj_t* tile;
 	if (nullptr == app) {
 		return -1;
 	}
-	xSemaphoreTake(impl->mutex, portMAX_DELAY);;
+	xSemaphoreTake(impl->mutex, portMAX_DELAY);
 	impl->apps.emplace_back(app, AppState::DESTROYED);
+	ESP_LOGI("AppMng", "%s", "RegisterApp");
+	tile = lv_tileview_add_tile(impl->list->tile_view, impl->apps.size() - 2, 0, LV_DIR_RIGHT);
+	impl->list->tile.emplace_back(tile);
+	if (nullptr != app->icon) {
+		img = lv_image_create(tile);
+		lv_image_set_src(img, app->icon);
+	} else {
+		// set default icon
+	}
 	xSemaphoreGive(impl->mutex);
 
 	return 0;
 }
 
 
-void AppList::OnCreate() {
-	tile_view = lv_tileview_create(lv_screen_active());
-    /*Tile1: just a label*/
-    lv_obj_t * tile1 = lv_tileview_add_tile(tile_view, 0, 0, LV_DIR_BOTTOM);
-    lv_obj_t * label = lv_label_create(tile1);
-    lv_label_set_text(label, "Scroll down");
-    lv_obj_center(label);
+AppList::AppList() {
+	tile_view = lv_tileview_create(NULL);
+}
 
+
+AppList::~AppList() {
+	// delete tile, tile view
+}
+
+
+void AppList::OnCreate() {
+    /*Tile1: just a label*/
+    //lv_obj_t * tile1 = lv_tileview_add_tile(tile_view, 0, 0, LV_DIR_BOTTOM);
+    //lv_obj_t * img = lv_image_create(tile1);
+    //lv_obj_center(img);
+#if 0
     /*Tile2: a button*/
     lv_obj_t * tile2 = lv_tileview_add_tile(tile_view, 0, 1, (lv_dir_t)(LV_DIR_TOP | LV_DIR_RIGHT));
 
@@ -113,15 +137,17 @@ void AppList::OnCreate() {
     lv_obj_t * tile3 = lv_tileview_add_tile(tile_view, 1, 1, LV_DIR_LEFT);
     lv_obj_t * list = lv_list_create(tile3);
     lv_obj_set_size(list, LV_PCT(100), LV_PCT(100));
+#endif
 }
 
 
 void AppList::OnStart() {
+
 }
 
 
 void AppList::OnStop() {
-
+	
 }
 
 
@@ -130,6 +156,6 @@ void AppList::OnDestroy() {
 }
 
 
-void AppList::Run() {
-
+lv_obj_t* AppList::Run() {
+	return tile_view;
 }

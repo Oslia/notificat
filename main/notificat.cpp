@@ -16,6 +16,7 @@
 #include "nvs_flash.h"
 #include "app_mng.hpp"
 #include "alarm.hpp"
+#include "weather.hpp"
 
 static const char *TAG = "notificat";
 #define EXAMPLE_ESP_WIFI_SSID      "241147923271"
@@ -75,9 +76,11 @@ void app_main(void)
     // lv_demo_benchmark();    /* A demo to measure the performance of LVGL or to compare different settings. */
     //bsp_display_unlock();
     AppMng& mng = AppMng::Instance();
-    Alarm alarm;
+    Alarm::Alarm alarm;
+    Weather::Weather weather;
     mng.RegisterApp(&alarm);
-    
+    mng.RegisterApp(&weather);
+    mng.Run();
 #if LOG_MEM_INFO
     static char buffer[128];    /* Make sure buffer is enough for `sprintf` */
     while (1) {

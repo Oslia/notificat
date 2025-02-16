@@ -15,7 +15,6 @@
         "*.hpp": "cpp",
         "*.h": "cpp",
         "*.c": "cpp",
-        "chrono": "cpp"
     },
     "editor.insertSpaces": false
 }

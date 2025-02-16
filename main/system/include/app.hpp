@@ -12,7 +12,7 @@ enum class AppState{
 class App {
 public:
 	std::string name;
-	char* icon;
+	const lv_image_dsc_t* icon;
 	virtual lv_obj_t* Run() = 0;
 	virtual void OnCreate() {}
 	virtual void OnStart() {}

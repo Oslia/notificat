@@ -12,6 +12,7 @@ class AppMng: public Singleton<AppMng> {
 public:
 	AppMng();
 	~AppMng();
+	void Run();
 	int RegisterApp(App* app);
 private:
 	AppMngPriv* impl;

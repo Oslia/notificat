@@ -1,4 +1,6 @@
 #include <vector>
+#include <functional>
+
 #include "freertos/FreeRTOS.h"
 #include "lvgl.h"
 #include "app.hpp"
@@ -16,7 +18,6 @@ std::vector<std::pair<App*, AppState>> AppMngPriv::apps;
 AppMng::AppMng() {
 	impl = new AppMngPriv;
 	assert(impl->mutex != NULL);
-	xTaskCreate(impl->Task, "AppMng", 4096, impl, 1, NULL);
 }
 
 
@@ -29,8 +30,7 @@ AppMng::~AppMng() {
 
 
 AppMngPriv::AppMngPriv() {
-	list = new AppList;
-	assert(list != nullptr);
+	list = &AppList::Instance();
 	apps.emplace_back(list, AppState::DESTROYED);
 }
 
@@ -61,9 +61,7 @@ void AppMngPriv::Manager(void) {
 			}
 			curr_app = next_app;
 			next_app = APP_MNG_NULL;
-			int size1 = apps.size();
-			AppState dbg = apps[curr_app].second;
-			if (AppState::DESTROYED == dbg) {
+			if (AppState::DESTROYED == apps[curr_app].second) {
 				apps[curr_app].first->OnCreate();
 			}
 			apps[curr_app].second = AppState::RUNNING;
@@ -83,6 +81,11 @@ void AppMngPriv::Manager(void) {
 }
 
 
+void AppMng::Run() {
+	xTaskCreate(impl->Task, "AppMng", 4096, impl, 1, NULL);
+}
+
+
 int AppMng::RegisterApp(App* app) {
 	lv_obj_t* img;
 	lv_obj_t* tile;
@@ -92,7 +95,7 @@ int AppMng::RegisterApp(App* app) {
 	xSemaphoreTake(impl->mutex, portMAX_DELAY);
 	impl->apps.emplace_back(app, AppState::DESTROYED);
 	ESP_LOGI("AppMng", "%s", "RegisterApp");
-	tile = lv_tileview_add_tile(impl->list->tile_view, impl->apps.size() - 2, 0, LV_DIR_RIGHT);
+	tile = lv_tileview_add_tile(impl->list->tile_view, impl->apps.size() - 2, 0, (lv_dir_t)(LV_DIR_LEFT | LV_DIR_RIGHT));
 	impl->list->tile.emplace_back(tile);
 	if (nullptr != app->icon) {
 		img = lv_image_create(tile);
@@ -107,7 +110,10 @@ int AppMng::RegisterApp(App* app) {
 
 
 AppList::AppList() {
-	tile_view = lv_tileview_create(NULL);
+	screen = lv_obj_create(NULL);
+	tile_view = lv_tileview_create(screen);
+
+	//lv_obj_remove_flag(tile_view, LV_OBJ_FLAG_SCROLLABLE);
 }
 
 
@@ -157,5 +163,7 @@ void AppList::OnDestroy() {
 
 
 lv_obj_t* AppList::Run() {
-	return tile_view;
+	return screen;
 }
+
+

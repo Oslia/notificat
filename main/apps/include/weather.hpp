@@ -1,6 +1,8 @@
 #ifndef APPS_WEATHER_HPP_
 #define APPS_WEATHER_HPP_
 
+#include "app.hpp"
+
 #define WEATHER_REFRASH_INTERVAL_TIME	1800		// s
 
 namespace Weather {
@@ -15,14 +17,17 @@ namespace Weather {
 		LOCATION_NUM
 	};
 
-	class Weather {
+	class Weather: public App {
 	public:
 		Weather();
 		~Weather();
-		static void* WeatherTask(void*);
-
+		void OnStart() override;
+		void OnStop() override;
+		lv_obj_t* Run() override;
 	private:
 		class WeatherPriv* weather;
+		lv_obj_t* screen;
+		lv_obj_t* time;
 	};
 }
 #endif	// APPS_WEATHER_HPP_

@@ -53,10 +53,10 @@
 
 #if LV_USE_STDLIB_MALLOC == LV_STDLIB_BUILTIN
     /*Size of the memory available for `lv_malloc()` in bytes (>= 2kB)*/
-    #define LV_MEM_SIZE (1024 * 1024U)          /*[bytes]*/
+    #define LV_MEM_SIZE (2048 * 1024U)          /*[bytes]*/
 
     /*Size of the memory expand for `lv_malloc()` in bytes*/
-    #define LV_MEM_POOL_EXPAND_SIZE 128
+    #define LV_MEM_POOL_EXPAND_SIZE 256
 
     /*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
     #define LV_MEM_ADR 0     /*0: unused*/
@@ -126,12 +126,12 @@
  * and can't be drawn in chunks. */
 
 /*The target buffer size for simple layer chunks.*/
-#define LV_DRAW_LAYER_SIMPLE_BUF_SIZE    (24 * 1024)   /*[bytes]*/
+#define LV_DRAW_LAYER_SIMPLE_BUF_SIZE    (34 * 1024)   /*[bytes]*/
 
 /* The stack size of the drawing thread.
  * NOTE: If FreeType or ThorVG is enabled, it is recommended to set it to 32KB or more.
  */
-#define LV_DRAW_THREAD_STACK_SIZE    (8 * 1024)   /*[bytes]*/
+#define LV_DRAW_THREAD_STACK_SIZE    (64 * 1024)   /*[bytes]*/
 
 #define LV_USE_DRAW_SW 1
 #if LV_USE_DRAW_SW == 1
@@ -450,7 +450,7 @@
 #define LV_ATTRIBUTE_MEM_ALIGN
 
 /*Attribute to mark large constant arrays for example font's bitmaps*/
-#define LV_ATTRIBUTE_LARGE_CONST
+#define LV_ATTRIBUTE_LARGE_CONST        EXT_RAM_BSS_ATTR
 
 /*Compiler prefix for a big array declaration in RAM*/
 #define LV_ATTRIBUTE_LARGE_RAM_ARRAY        EXT_RAM_BSS_ATTR

@@ -6,22 +6,42 @@
 
 #define TAG "weather"
 
-namespace Weather {
+LV_IMG_DECLARE(weather_img);
 
+namespace Weather {
 	constexpr struct GCS city[Location::LOCATION_NUM] = {
 		{35.6895, 139.6917},		// TOKYO
 	};
 
+// ====================
+// Weather
+// ====================
+	Weather::Weather() {
+		screen = lv_obj_create(NULL);
+		time = lv_label_create(screen);
+		icon = &weather_img;
+		name = "Weather";
+	}
 
 
+	void Weather::OnStart() {
+		
+	}
 
 
+	void Weather::OnStop() {
+		
+	}
 
 
+	lv_obj_t* Weather::Run() {
+		return nullptr;
+	}
 
-	// ====================
-	// WeatherPriv
-	// ====================
+
+// ====================
+// WeatherPriv
+// ====================
 
 
 	WeatherPriv::WeatherPriv() {

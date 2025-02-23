@@ -43,7 +43,7 @@ void AppMngPriv::Task(void* arg) {
 }
 
 
-void AppMngPriv::SetApp(int app) {
+void AppMngPriv::Execute(int app) {
 	next_app = app;
 }
 
@@ -96,6 +96,8 @@ int AppMng::RegisterApp(App* app) {
 	impl->apps.emplace_back(app, AppState::DESTROYED);
 	ESP_LOGI("AppMng", "%s", "RegisterApp");
 	tile = lv_tileview_add_tile(impl->list->tile_view, impl->apps.size() - 2, 0, (lv_dir_t)(LV_DIR_LEFT | LV_DIR_RIGHT));
+	lv_obj_set_user_data(tile, (void*)app->name.c_str());
+	lv_obj_add_flag(tile, LV_OBJ_FLAG_EVENT_BUBBLE);
 	impl->list->tile.emplace_back(tile);
 	if (nullptr != app->icon) {
 		img = lv_image_create(tile);
@@ -112,8 +114,7 @@ int AppMng::RegisterApp(App* app) {
 AppList::AppList() {
 	screen = lv_obj_create(NULL);
 	tile_view = lv_tileview_create(screen);
-
-	//lv_obj_remove_flag(tile_view, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_event_cb(tile_view, EventHandler, LV_EVENT_ALL, NULL);
 }
 
 
@@ -167,3 +168,27 @@ lv_obj_t* AppList::Run() {
 }
 
 
+void AppList::EventHandler(lv_event_t* e) {
+	AppList& app_list = AppList::Instance();
+    lv_event_code_t code = lv_event_get_code(e);
+	lv_obj_t* widget = lv_event_get_target_obj(e);
+	char* app_name = (char*)lv_obj_get_user_data(widget);
+
+    switch(code) {
+        case LV_EVENT_PRESSED:
+
+            break;
+        case LV_EVENT_CLICKED:
+
+            break;
+        case LV_EVENT_LONG_PRESSED:
+			printf("widget:%s\n", app_name);
+			AppMngPriv::Execute(app_list.current_tile + APP_MNG_SYSTEM_APP_NUM);
+            break;
+        case LV_EVENT_LONG_PRESSED_REPEAT:
+
+            break;
+        default:
+            break;
+    }
+}

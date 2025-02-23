@@ -24,8 +24,7 @@ public:
 	int current_tile;
 	std::vector<lv_obj_t*> tile;
 private:
-	static void BtnPrevEvHandler(lv_event_t* e);
-	static void BtnNextEvHandler(lv_event_t* e);
+	static void EventHandler(lv_event_t* e);
 	friend Singleton;
 };
 
@@ -34,7 +33,7 @@ public:
 	AppMngPriv();
 
 	static void Task(void*);
-	static void SetApp(int app);
+	static void Execute(int app);
 	
 	static std::vector<std::pair<App*, AppState>> apps;
 	static SemaphoreHandle_t mutex;

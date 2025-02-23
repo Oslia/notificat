@@ -26,7 +26,7 @@ RUN : \
     libglib2.0-0 \
     libncurses-dev \
     libpixman-1-0 \
-    libsdl2-2.0-0 \
+    #libsdl2-2.0-0 \
     libslirp0 \
     libusb-1.0-0-dev \
     make \
@@ -40,6 +40,7 @@ RUN : \
     zip \
     cmake \
     udev \
+    libsdl2-dev \
   && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/* \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 10 \

@@ -8,7 +8,8 @@ LV_IMG_DECLARE(notificat_img);
 namespace Alarm {
     Alarm::Alarm() {
         screen = lv_obj_create(NULL);
-        time = lv_label_create(screen);
+        clock = lv_label_create(screen);
+        lv_obj_center(clock);
         icon = &notificat_img;
         name = "Alarm";
     }
@@ -16,7 +17,7 @@ namespace Alarm {
 
     Alarm::~Alarm() {
         lv_obj_delete(screen);
-        lv_obj_delete(time);
+        lv_obj_delete(clock);
     }
 
 
@@ -31,7 +32,14 @@ namespace Alarm {
 
 
     lv_obj_t* Alarm::Run() {
-        lv_label_set_text(time, "17:00");
+        char time_buf[64];
+        struct tm timeinfo;
+        time(&now);
+        localtime_r(&now, &timeinfo);
+        sprintf(time_buf, "%d:%d", timeinfo.tm_hour, timeinfo.tm_min);
+        //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+        lv_label_set_text(clock, time_buf);
+        
         return screen;
     }
 }

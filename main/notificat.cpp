@@ -50,11 +50,12 @@ void app_main(void)
         return;
     }
     ESP_ERROR_CHECK(nvs_flash_init());
-    //Network& network = Network::Instance();
-    //network.ConnectWifi(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
-    //mytest();
     /* Initialize display and LVGL */
     bsp_display_start();
+    
+    Network& network = Network::Instance();
+    network.ConnectWifi(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+    //mytest();
     
 #if CONFIG_BSP_DISPLAY_LVGL_AVOID_TEAR
     ESP_LOGI(TAG, "Avoid lcd tearing effect");
@@ -66,7 +67,7 @@ void app_main(void)
 #endif
 
     /* Set display brightness to 100% */
-    bsp_display_backlight_on();
+    //bsp_display_backlight_on();
     
     ESP_LOGI(TAG, "Display LVGL demo");
     //bsp_display_lock(0);

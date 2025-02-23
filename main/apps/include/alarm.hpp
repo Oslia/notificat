@@ -5,7 +5,7 @@
 
 namespace Alarm {
 	class Alarm: public App {
-		public:
+	public:
 		Alarm();
 		~Alarm();
 		void OnStart() override;
@@ -13,7 +13,9 @@ namespace Alarm {
 		lv_obj_t* Run() override;
 		private:
 		lv_obj_t* screen;
-		lv_obj_t* time;
+		lv_obj_t* clock;
+	private:
+		time_t now;
 	};
 }
 	

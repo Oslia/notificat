@@ -56,7 +56,13 @@ void app_main(void)
     Network& network = Network::Instance();
     network.ConnectWifi(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
     //mytest();
-    
+
+    network.TimeSync();
+
+    /* Set time zone JAPAN */
+    setenv("TZ", "JST-9", 1);
+    tzset();
+
 #if CONFIG_BSP_DISPLAY_LVGL_AVOID_TEAR
     ESP_LOGI(TAG, "Avoid lcd tearing effect");
 #if CONFIG_BSP_DISPLAY_LVGL_FULL_REFRESH

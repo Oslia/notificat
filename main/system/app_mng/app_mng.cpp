@@ -34,6 +34,7 @@ AppMngPriv::AppMngPriv() {
 	apps.emplace_back(list, AppState::DESTROYED);
 }
 
+
 void AppMngPriv::Task(void* arg) {
 	AppMngPriv* self = static_cast<AppMngPriv*>(arg);
 	while(1) {

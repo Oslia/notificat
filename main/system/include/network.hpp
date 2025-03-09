@@ -9,6 +9,7 @@ class Network: public Singleton<Network> {
 
 public:
 	void ConnectWifi(const char* ssid, const char* pw);
+	esp_err_t TimeSync(void);
 
 private:
 	Network();

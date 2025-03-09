@@ -203,3 +203,9 @@ void Network::ConnectWifi(const char* ssid, const char* pw) {
     ESP_ERROR_CHECK(esp_timer_create(&nvs_update_timer_args, &nvs_update_timer));
     ESP_ERROR_CHECK(esp_timer_start_periodic(nvs_update_timer, TIME_PERIOD));
 }
+
+
+esp_err_t Network::TimeSync(void) {
+    ESP_LOGI(TAG, "Syncing time from SNTP server.");
+    return fetch_and_store_time_in_nvs(NULL);
+}

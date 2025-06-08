@@ -5,19 +5,22 @@
 #include "singleton.hpp"
 #include "app.hpp"
 
-#define APP_MNG_NULL			-1
-#define APP_MNG_APP_LIST		0
+#define APP_MNG_NULL				-1
+#define APP_MNG_APP_LIST			0
 
-#define APP_MNG_SYSTEM_APP_NUM	1
+#define APP_MNG_APP_LIST_BAR_SIZE	10
 
-class AppList: public App, public Singleton<AppList> {
+#define APP_LIST_MENU_BTN_WIDTH		75
+#define APP_LIST_MENU_BTN_HEIGHT	75
+
+class AppMngPriv;
+
+class AppList: public App, Singleton<AppList> {
 public:
 	AppList();
 	~AppList();
-	void OnCreate() override;
 	void OnStart() override;
 	void OnStop() override;
-	void OnDestroy() override;
 	lv_obj_t* Run() override;
 	lv_obj_t* screen;
 	lv_obj_t* tile_view;
@@ -25,6 +28,7 @@ public:
 	std::vector<lv_obj_t*> tile;
 private:
 	static void EventHandler(lv_event_t* e);
+	friend AppMngPriv;
 	friend Singleton;
 };
 
@@ -33,15 +37,18 @@ public:
 	AppMngPriv();
 
 	static void Task(void*);
-	static void Execute(int app);
-	
+	static void Execute(std::string app_name);
+	static void BtnMenuEventHandler(lv_event_t * e);
+
 	static std::vector<std::pair<App*, AppState>> apps;
-	static SemaphoreHandle_t mutex;
+	static SemaphoreHandle_t mutex;		// For the case of app is run on seperate task
 	static int curr_app;
-	static int next_app;
-
+	static std::string next_app;
+	static bool execute_req;
+	
+	lv_obj_t* btn_menu;
 	void Manager();
-
+	int AppNameToIndex(const std::string& app_name);
 	AppList* list;
 
 	friend AppList;

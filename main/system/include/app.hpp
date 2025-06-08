@@ -2,6 +2,7 @@
 #define APP_HPP_
 
 #include <string>
+#include <lvgl.h>
 
 enum class AppState{
 	DESTROYED,

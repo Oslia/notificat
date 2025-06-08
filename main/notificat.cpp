@@ -50,8 +50,9 @@ void app_main(void)
         return;
     }
     ESP_ERROR_CHECK(nvs_flash_init());
+
     /* Initialize display and LVGL */
-    bsp_display_start();
+	bsp_display_start();
     
     Network& network = Network::Instance();
     network.ConnectWifi(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
@@ -100,11 +101,11 @@ void app_main(void)
                 heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM),
                 heap_caps_get_free_size(MALLOC_CAP_SPIRAM),
                 heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
-        ESP_LOGI("MEM", "%s", buffer);
+        //ESP_LOGI("MEM", "%s", buffer);
         time(&now);
         localtime_r(&now, &timeinfo);
         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-        ESP_LOGI(TAG, "%s", strftime_buf);
+        //ESP_LOGI(TAG, "%s", strftime_buf);
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 #endif

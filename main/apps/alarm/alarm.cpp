@@ -8,10 +8,12 @@ LV_IMG_DECLARE(notificat_img);
 namespace Alarm {
     Alarm::Alarm() {
         screen = lv_obj_create(NULL);
+        lv_obj_set_style_bg_color(screen, lv_color_black(), 0);
         clock = lv_label_create(screen);
         lv_obj_center(clock);
         icon = &notificat_img;
-        name = "Alarm";
+        name = "alarm";
+        lv_obj_set_style_text_font(clock, &lv_font_montserrat_42, 0);
     }
 
 

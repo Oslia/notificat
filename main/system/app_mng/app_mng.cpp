@@ -1,5 +1,6 @@
 #include <vector>
 #include <functional>
+#include <string>
 
 #include "freertos/FreeRTOS.h"
 #include "lvgl.h"
@@ -10,14 +11,17 @@
 
 #include "esp_log.h"
 
-SemaphoreHandle_t AppMngPriv::mutex = xSemaphoreCreateMutex();
+LV_IMG_DECLARE(menu_img_release);
+LV_IMG_DECLARE(menu_img_press);
+
+SemaphoreHandle_t AppMngPriv::mutex;
 int AppMngPriv::curr_app = APP_MNG_NULL;
-int AppMngPriv::next_app = APP_MNG_APP_LIST;
+bool AppMngPriv::execute_req = false;
+std::string AppMngPriv::next_app;
 std::vector<std::pair<App*, AppState>> AppMngPriv::apps;
 
 AppMng::AppMng() {
 	impl = new AppMngPriv;
-	assert(impl->mutex != NULL);
 }
 
 
@@ -26,59 +30,6 @@ AppMng::~AppMng() {
 	// call OnDestroy
 	// delete each app
 	delete impl;
-}
-
-
-AppMngPriv::AppMngPriv() {
-	list = &AppList::Instance();
-	apps.emplace_back(list, AppState::DESTROYED);
-}
-
-
-void AppMngPriv::Task(void* arg) {
-	AppMngPriv* self = static_cast<AppMngPriv*>(arg);
-	while(1) {
-		self->Manager();
-		vTaskDelay(pdMS_TO_TICKS(35));
-	}
-}
-
-
-void AppMngPriv::Execute(int app) {
-	next_app = app;
-}
-
-
-void AppMngPriv::Manager(void) {
-	lv_obj_t* scr;
-	bsp_display_lock(0);
-	xSemaphoreTake(mutex, portMAX_DELAY);
-	
-	if (APP_MNG_NULL != next_app) {
-		if (next_app != curr_app) {
-			if (APP_MNG_NULL != curr_app) {
-				apps[curr_app].first->OnStop();
-				apps[curr_app].second = AppState::STOPPED;
-			}
-			curr_app = next_app;
-			next_app = APP_MNG_NULL;
-			if (AppState::DESTROYED == apps[curr_app].second) {
-				apps[curr_app].first->OnCreate();
-			}
-			apps[curr_app].second = AppState::RUNNING;
-			apps[curr_app].first->OnStart();
-		}
-	}
-
-	if (AppState::RUNNING == apps[curr_app].second) {
-		scr = apps[curr_app].first->Run();
-		if (nullptr != scr) {
-			lv_scr_load(scr);
-		}
-	}
-
-	xSemaphoreGive(mutex);
-	bsp_display_unlock();
 }
 
 
@@ -97,7 +48,7 @@ int AppMng::RegisterApp(App* app) {
 	impl->apps.emplace_back(app, AppState::DESTROYED);
 	ESP_LOGI("AppMng", "%s", "RegisterApp");
 	tile = lv_tileview_add_tile(impl->list->tile_view, impl->apps.size() - 2, 0, (lv_dir_t)(LV_DIR_LEFT | LV_DIR_RIGHT));
-	lv_obj_set_user_data(tile, (void*)app->name.c_str());
+	lv_obj_set_user_data(tile, (void*)&app->name);
 	lv_obj_add_flag(tile, LV_OBJ_FLAG_EVENT_BUBBLE);
 	impl->list->tile.emplace_back(tile);
 	if (nullptr != app->icon) {
@@ -112,10 +63,125 @@ int AppMng::RegisterApp(App* app) {
 }
 
 
+void AppMngPriv::BtnMenuEventHandler(lv_event_t * e) {
+    lv_event_code_t code = lv_event_get_code(e);
+
+    if(code == LV_EVENT_CLICKED) {
+		AppMngPriv::Execute("app_list");
+    }
+}
+
+
+AppMngPriv::AppMngPriv() {
+	mutex = xSemaphoreCreateMutex();
+	assert(mutex != NULL);
+	lv_obj_t* top = lv_layer_top();
+
+	btn_menu = lv_imagebutton_create(top);
+	lv_imagebutton_set_src(btn_menu, LV_IMGBTN_STATE_RELEASED, NULL, &menu_img_release, NULL);
+	lv_imagebutton_set_src(btn_menu, LV_IMGBTN_STATE_PRESSED, NULL, &menu_img_press, NULL);
+    lv_obj_add_event_cb(btn_menu, BtnMenuEventHandler, LV_EVENT_ALL, NULL);
+
+	lv_obj_set_size(btn_menu, APP_LIST_MENU_BTN_WIDTH, APP_LIST_MENU_BTN_HEIGHT);
+	lv_obj_set_pos(btn_menu, LV_HOR_RES - APP_LIST_MENU_BTN_WIDTH - 10, LV_VER_RES - APP_LIST_MENU_BTN_HEIGHT - 10);
+	lv_obj_add_flag(btn_menu, LV_OBJ_FLAG_HIDDEN);
+
+	list = &AppList::Instance();
+	apps.emplace_back(list, AppState::DESTROYED);
+	next_app = "app_list";
+}
+
+
+void AppMngPriv::Task(void* arg) {
+	AppMngPriv* self = static_cast<AppMngPriv*>(arg);
+	while(1) {
+		self->Manager();
+		vTaskDelay(pdMS_TO_TICKS(35));
+	}
+}
+
+
+void AppMngPriv::Execute(std::string app_name) {
+	next_app = app_name;
+	execute_req = true;
+}
+
+
+void AppMngPriv::Manager(void) {
+	lv_obj_t* scr = NULL;
+	int next = APP_MNG_NULL;
+
+	bsp_display_lock(0);
+	xSemaphoreTake(mutex, portMAX_DELAY);
+	
+	if (APP_MNG_NULL == curr_app) {
+		if (apps.size() > 0) {
+			curr_app = 0;
+			apps[curr_app].first->OnCreate();
+			apps[curr_app].second = AppState::RUNNING;
+			apps[curr_app].first->OnStart();
+		}
+	} else {
+		if (execute_req) {
+			execute_req = false;
+			next = AppNameToIndex(next_app);
+		}
+		if (APP_MNG_NULL != next) {
+			if (next != curr_app) {
+				if (APP_MNG_NULL != curr_app) {
+					apps[curr_app].first->OnStop();
+					apps[curr_app].second = AppState::STOPPED;
+				}
+				curr_app = next;
+				if (AppState::DESTROYED == apps[curr_app].second) {
+					apps[curr_app].first->OnCreate();
+				}
+				apps[curr_app].second = AppState::RUNNING;
+				apps[curr_app].first->OnStart();
+				
+				if (APP_MNG_APP_LIST == next) {
+					lv_obj_add_flag(btn_menu, LV_OBJ_FLAG_HIDDEN);
+				} else {
+					lv_obj_remove_flag(btn_menu, LV_OBJ_FLAG_HIDDEN);
+				}
+
+				next = APP_MNG_NULL;
+			}
+		}
+	}
+
+	if (AppState::RUNNING == apps[curr_app].second) {
+		scr = apps[curr_app].first->Run();
+		if (nullptr != scr) {
+			lv_scr_load(scr);
+		}
+	}
+
+	xSemaphoreGive(mutex);
+	bsp_display_unlock();
+}
+
+
+int AppMngPriv::AppNameToIndex(const std::string& app_name) {
+	int index = 0;
+	for (std::pair<App*, AppState>& app : apps) {
+		if (app.first->name == app_name) {
+			return index;
+		}
+		index++;
+	}
+
+	return APP_MNG_NULL;
+}
+
+
 AppList::AppList() {
 	screen = lv_obj_create(NULL);
+	name = "app_list";
+	
 	tile_view = lv_tileview_create(screen);
     lv_obj_add_event_cb(tile_view, EventHandler, LV_EVENT_ALL, NULL);
+    lv_obj_set_size(tile_view, LV_HOR_RES, LV_VER_RES);
 }
 
 
@@ -124,72 +190,44 @@ AppList::~AppList() {
 }
 
 
-void AppList::OnCreate() {
-    /*Tile1: just a label*/
-    //lv_obj_t * tile1 = lv_tileview_add_tile(tile_view, 0, 0, LV_DIR_BOTTOM);
-    //lv_obj_t * img = lv_image_create(tile1);
-    //lv_obj_center(img);
-#if 0
-    /*Tile2: a button*/
-    lv_obj_t * tile2 = lv_tileview_add_tile(tile_view, 0, 1, (lv_dir_t)(LV_DIR_TOP | LV_DIR_RIGHT));
-
-    lv_obj_t * btn = lv_button_create(tile2);
-
-    label = lv_label_create(btn);
-    lv_label_set_text(label, "Scroll up or right");
-
-    lv_obj_set_size(btn, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_center(btn);
-
-    /*Tile3: a list*/
-    lv_obj_t * tile3 = lv_tileview_add_tile(tile_view, 1, 1, LV_DIR_LEFT);
-    lv_obj_t * list = lv_list_create(tile3);
-    lv_obj_set_size(list, LV_PCT(100), LV_PCT(100));
-#endif
+void AppList::OnStart(void) {
+	lv_tileview_set_tile_by_index(tile_view, 0, 0, LV_ANIM_OFF);
 }
 
 
-void AppList::OnStart() {
+void AppList::OnStop(void) {
 
 }
 
 
-void AppList::OnStop() {
-	
-}
-
-
-void AppList::OnDestroy() {
-
-}
-
-
-lv_obj_t* AppList::Run() {
+lv_obj_t* AppList:: Run(void) {
 	return screen;
 }
 
 
 void AppList::EventHandler(lv_event_t* e) {
-	AppList& app_list = AppList::Instance();
     lv_event_code_t code = lv_event_get_code(e);
-	lv_obj_t* widget = lv_event_get_target_obj(e);
-	char* app_name = (char*)lv_obj_get_user_data(widget);
-
+	lv_obj_t* tileview = lv_event_get_target_obj(e);
+	std::string* app_name = (std::string*)lv_obj_get_user_data(tileview);
     switch(code) {
-        case LV_EVENT_PRESSED:
+    case LV_EVENT_PRESSED:
+        break;
+	case LV_EVENT_PRESSING:
 
-            break;
-        case LV_EVENT_CLICKED:
+		break;
+    case LV_EVENT_CLICKED:
 
-            break;
-        case LV_EVENT_LONG_PRESSED:
-			printf("widget:%s\n", app_name);
-			AppMngPriv::Execute(app_list.current_tile + APP_MNG_SYSTEM_APP_NUM);
-            break;
-        case LV_EVENT_LONG_PRESSED_REPEAT:
+       break;
+	case LV_EVENT_RELEASED:
+		break;
+    case LV_EVENT_LONG_PRESSED: {
+		AppMngPriv::Execute(*app_name);
+		break;
+	}
+    case LV_EVENT_LONG_PRESSED_REPEAT:
 
-            break;
-        default:
-            break;
+        break;
+    default:
+       break;
     }
 }

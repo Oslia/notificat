@@ -20,7 +20,7 @@ namespace Weather {
 		screen = lv_obj_create(NULL);
 		time = lv_label_create(screen);
 		icon = &weather_img;
-		name = "Weather";
+		name = "weather";
 	}
 
 

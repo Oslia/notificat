@@ -25,8 +25,6 @@ namespace Weather {
 		void UpdateWeather();
 		const lv_image_dsc_t* GetWeatherIcon(WeatherCode code);
 		WeatherCode weather_code_for_day[7];
-		lv_obj_t* container_weather_now;
-		lv_obj_t* container_weather_3h;
 		WeatherCode weather_code_for_3h[8];
 	};
 }

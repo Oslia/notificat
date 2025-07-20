@@ -34,16 +34,20 @@ namespace Weather {
 		weather = new WeatherPriv;
 
 		screen = lv_obj_create(NULL);
-		weather->container_weather_now = lv_image_create(screen);
+        lv_obj_set_style_bg_color(screen, lv_color_black(), 0);
+
+		container_weather_now = lv_image_create(screen);
 		weather->UpdateWeather();
 		const lv_image_dsc_t* icon = weather->GetWeatherIcon(weather->weather_code_for_day[0]);
-		lv_image_set_src(weather->container_weather_now, icon);
+		lv_image_set_src(container_weather_now, icon);
+		lv_obj_align(container_weather_now, LV_ALIGN_CENTER, 0, 0);
+		lv_image_set_scale(container_weather_now, 512);
 	}
 
 	
 	Weather::~Weather() {
 		lv_obj_delete(screen);
-		lv_obj_delete(weather->container_weather_now);
+		lv_obj_delete(container_weather_now);
 		delete weather;
 	}
 

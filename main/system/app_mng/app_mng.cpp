@@ -89,6 +89,7 @@ AppMngPriv::AppMngPriv() {
 	list = &AppList::Instance();
 	apps.emplace_back(list, AppState::DESTROYED);
 	next_app = "app_list";
+	execute_req = true;
 }
 
 
@@ -114,47 +115,39 @@ void AppMngPriv::Manager(void) {
 	bsp_display_lock(0);
 	xSemaphoreTake(mutex, portMAX_DELAY);
 	
-	if (APP_MNG_NULL == curr_app) {
-		if (apps.size() > 0) {
-			curr_app = 0;
-			apps[curr_app].first->OnCreate();
+	if (execute_req) {
+		execute_req = false;
+		next = AppNameToIndex(next_app);
+	}
+	if (APP_MNG_NULL != next) {
+		if (next != curr_app) {
+			if (APP_MNG_NULL != curr_app) {
+				apps[curr_app].first->OnStop();
+				apps[curr_app].second = AppState::STOPPED;
+			}
+			curr_app = next;
+			if (AppState::DESTROYED == apps[curr_app].second) {
+				apps[curr_app].first->OnCreate();
+			}
 			apps[curr_app].second = AppState::RUNNING;
 			apps[curr_app].first->OnStart();
-		}
-	} else {
-		if (execute_req) {
-			execute_req = false;
-			next = AppNameToIndex(next_app);
-		}
-		if (APP_MNG_NULL != next) {
-			if (next != curr_app) {
-				if (APP_MNG_NULL != curr_app) {
-					apps[curr_app].first->OnStop();
-					apps[curr_app].second = AppState::STOPPED;
-				}
-				curr_app = next;
-				if (AppState::DESTROYED == apps[curr_app].second) {
-					apps[curr_app].first->OnCreate();
-				}
-				apps[curr_app].second = AppState::RUNNING;
-				apps[curr_app].first->OnStart();
-				
-				if (APP_MNG_APP_LIST == next) {
-					lv_obj_add_flag(btn_menu, LV_OBJ_FLAG_HIDDEN);
-				} else {
-					lv_obj_remove_flag(btn_menu, LV_OBJ_FLAG_HIDDEN);
-				}
-
-				next = APP_MNG_NULL;
+			scr = apps[curr_app].first->screen;
+			if (nullptr != scr) {
+				lv_scr_load(scr);
 			}
+			
+			if (APP_MNG_APP_LIST == next) {
+				lv_obj_add_flag(btn_menu, LV_OBJ_FLAG_HIDDEN);
+			} else {
+				lv_obj_remove_flag(btn_menu, LV_OBJ_FLAG_HIDDEN);
+			}
+
+			next = APP_MNG_NULL;
 		}
 	}
-
-	if (AppState::RUNNING == apps[curr_app].second) {
-		scr = apps[curr_app].first->Run();
-		if (nullptr != scr) {
-			lv_scr_load(scr);
-		}
+	
+	if (APP_MNG_NULL != curr_app) {
+		apps[curr_app].first->Run();
 	}
 
 	xSemaphoreGive(mutex);
@@ -200,8 +193,8 @@ void AppList::OnStop(void) {
 }
 
 
-lv_obj_t* AppList:: Run(void) {
-	return screen;
+void AppList::Run(void) {
+	return;
 }
 
 

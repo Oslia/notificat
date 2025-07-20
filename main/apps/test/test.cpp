@@ -13,8 +13,9 @@
 #define MAX_HTTP_RECV_BUFFER 512
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 #define WEB_URL "https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo"
+#define WEB_PATH    "/v1/forecast?latitude=35.6895&longitude=139.6917&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo"
 #define WEB_SERVER "api.open-meteo.com"
-static const char req[] = "GET " WEB_URL " HTTP/1.1\r\n"
+static const char req[] = "GET " WEB_PATH " HTTP/1.1\r\n"
                              "Host: "WEB_SERVER"\r\n"
                              "User-Agent: esp-idf/1.0 esp32\r\n"
                              "\r\n";
@@ -22,10 +23,11 @@ static const char req[] = "GET " WEB_URL " HTTP/1.1\r\n"
 static const char* TAG = "mytest";
 
 void mytest(void) {
-	
-	esp_tls_cfg_t cfg = {
-		.crt_bundle_attach = esp_crt_bundle_attach,
-    };
-    HttpClient http_client;
-    http_client.GetRequest(cfg, WEB_URL, req);
+	char buf[512];
+//	esp_tls_cfg_t cfg = {
+//		.crt_bundle_attach = esp_crt_bundle_attach,
+//    };
+  HttpsClient http_client;
+  http_client.GetRequest(WEB_SERVER, WEB_URL, WEB_PATH, buf, 512);
+  ESP_LOGI(TAG, "mytest:%s", buf);
 }

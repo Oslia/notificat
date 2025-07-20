@@ -21,8 +21,7 @@ public:
 	~AppList();
 	void OnStart() override;
 	void OnStop() override;
-	lv_obj_t* Run() override;
-	lv_obj_t* screen;
+	void Run() override;
 	lv_obj_t* tile_view;
 	int current_tile;
 	std::vector<lv_obj_t*> tile;

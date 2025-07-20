@@ -3,11 +3,11 @@
 
 #include "esp_tls.h"
 
-class HttpClient {
+class HttpsClient {
 public:
-	HttpClient();
-	~HttpClient();
-	void GetRequest(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, const char *REQUEST);
+	HttpsClient();
+	~HttpsClient();
+	void GetRequest(const char* server, const char *url, const char *path, char* buf, size_t buf_size);
 };
 
 #endif	// HTTP_HPP_

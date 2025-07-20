@@ -10,9 +10,8 @@ namespace Alarm {
 		~Alarm();
 		void OnStart() override;
 		void OnStop() override;
-		lv_obj_t* Run() override;
-		private:
-		lv_obj_t* screen;
+		void Run() override;
+	private:
 		lv_obj_t* clock;
 	private:
 		time_t now;

@@ -76,7 +76,6 @@ void app_main(void)
     /* Set display brightness to 100% */
     //bsp_display_backlight_on();
     
-    ESP_LOGI(TAG, "Display LVGL demo");
     //bsp_display_lock(0);
     // lv_demo_widgets();      /* A widgets example */
     // lv_demo_music();        /* A modern, smartphone-like music player demo. */
@@ -90,23 +89,22 @@ void app_main(void)
     mng.RegisterApp(&weather);
     mng.Run();
 #if LOG_MEM_INFO
-    static char buffer[128];    /* Make sure buffer is enough for `sprintf` */
+    //static char buffer[128];    /* Make sure buffer is enough for `sprintf` */
     while (1) {
-        sprintf(buffer, "   Biggest /     Free /    Total\n"
-                "\t  SRAM : [%8d / %8d / %8d]\n"
-                "\t PSRAM : [%8d / %8d / %8d]",
-                heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
-                heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-                heap_caps_get_total_size(MALLOC_CAP_INTERNAL),
-                heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM),
-                heap_caps_get_free_size(MALLOC_CAP_SPIRAM),
-                heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
+        //sprintf(buffer, "   Biggest /     Free /    Total\n"
+        //        "\t  SRAM : [%8d / %8d / %8d]\n"
+        //        "\t PSRAM : [%8d / %8d / %8d]",
+        //        heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+        //        heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+        //        heap_caps_get_total_size(MALLOC_CAP_INTERNAL),
+        //        heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM),
+        //        heap_caps_get_free_size(MALLOC_CAP_SPIRAM),
+        //        heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
         //ESP_LOGI("MEM", "%s", buffer);
-        time(&now);
-        localtime_r(&now, &timeinfo);
-        strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-        //ESP_LOGI(TAG, "%s", strftime_buf);
-        vTaskDelay(pdMS_TO_TICKS(500));
+        //time(&now);
+        //localtime_r(&now, &timeinfo);
+        //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 #endif
     ESP_ERROR_CHECK(esp_vfs_fat_spiflash_unmount_rw_wl(base_path, s_wl_handle));

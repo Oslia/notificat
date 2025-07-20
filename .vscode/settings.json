@@ -15,6 +15,10 @@
         "*.hpp": "cpp",
         "*.h": "cpp",
         "*.c": "cpp",
+        "string": "cpp",
+        "format": "cpp",
+        "future": "cpp"
     },
-    "editor.insertSpaces": false
+    "editor.insertSpaces": false,
+    "idf.monitorPort": "/dev/ttyACM0"
 }

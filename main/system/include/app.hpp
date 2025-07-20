@@ -14,7 +14,9 @@ class App {
 public:
 	std::string name;
 	const lv_image_dsc_t* icon;
-	virtual lv_obj_t* Run() = 0;
+	lv_obj_t* screen;
+	
+	virtual void Run() = 0;
 	virtual void OnCreate() {}
 	virtual void OnStart() {}
 	virtual void OnStop() {}

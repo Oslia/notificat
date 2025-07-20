@@ -7,7 +7,7 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#include <string.h>
+#include <string>
 #include <sys/param.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -28,124 +28,51 @@
 #include "esp_http_client.h"
 #include "http.hpp"
 
-#define MAX_HTTP_RECV_BUFFER 512
-#define MAX_HTTP_OUTPUT_BUFFER 2048
-static const char *TAG = "HTTP_CLIENT";
+static const char *TAG = "HTTPS_CLIENT";
 
-esp_err_t _http_event_handler(esp_http_client_event_t *evt)
-{
-    static char *output_buffer;  // Buffer to store response of http request from event handler
-    static int output_len;       // Stores number of bytes read
-    switch(evt->event_id) {
-        case HTTP_EVENT_REDIRECT:
-            ESP_LOGD(TAG, "HTTP_EVENT_REDIRECT");
-            esp_http_client_set_header(evt->client, "From", "user@example.com");
-            esp_http_client_set_header(evt->client, "Accept", "text/html");
-            esp_http_client_set_redirection(evt->client);
-            break;
-        case HTTP_EVENT_ERROR:
-            ESP_LOGD(TAG, "HTTP_EVENT_ERROR");
-            break;
-        case HTTP_EVENT_ON_CONNECTED:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_CONNECTED");
-            break;
-        case HTTP_EVENT_HEADER_SENT:
-            ESP_LOGD(TAG, "HTTP_EVENT_HEADER_SENT");
-            break;
-        case HTTP_EVENT_ON_HEADER:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_HEADER, key=%s, value=%s", evt->header_key, evt->header_value);
-            break;
-        case HTTP_EVENT_ON_DATA:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
-            // Clean the buffer in case of a new request
-            if (output_len == 0 && evt->user_data) {
-                // we are just starting to copy the output data into the use
-                memset(evt->user_data, 0, MAX_HTTP_OUTPUT_BUFFER);
-            }
-            /*
-             *  Check for chunked encoding is added as the URL for chunked encoding used in this example returns binary data.
-             *  However, event handler can also be used in case chunked encoding is used.
-             */
-            if (!esp_http_client_is_chunked_response(evt->client)) {
-                // If user_data buffer is configured, copy the response into the buffer
-                int copy_len = 0;
-                if (evt->user_data) {
-                    // The last byte in evt->user_data is kept for the NULL character in case of out-of-bound access.
-                    copy_len = MIN(evt->data_len, (MAX_HTTP_OUTPUT_BUFFER - output_len));
-                    if (copy_len) {
-                        memcpy(evt->user_data + output_len, evt->data, copy_len);
-                    }
-                } else {
-                    int content_len = esp_http_client_get_content_length(evt->client);
-                    if (output_buffer == NULL) {
-                        // We initialize output_buffer with 0 because it is used by strlen() and similar functions therefore should be null terminated.
-                        output_buffer = (char *) calloc(content_len + 1, sizeof(char));
-                        output_len = 0;
-                        if (output_buffer == NULL) {
-                            ESP_LOGE(TAG, "Failed to allocate memory for output buffer");
-                            return ESP_FAIL;
-                        }
-                    }
-                    copy_len = MIN(evt->data_len, (content_len - output_len));
-                    if (copy_len) {
-                        memcpy(output_buffer + output_len, evt->data, copy_len);
-                    }
-                }
-                output_len += copy_len;
-            }
-
-            break;
-        case HTTP_EVENT_ON_FINISH:
-            ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
-            if (output_buffer != NULL) {
-#if CONFIG_EXAMPLE_ENABLE_RESPONSE_BUFFER_DUMP
-                ESP_LOG_BUFFER_HEX(TAG, output_buffer, output_len);
-#endif
-                free(output_buffer);
-                output_buffer = NULL;
-            }
-            output_len = 0;
-            break;
-        case HTTP_EVENT_DISCONNECTED:
-            ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
-            int mbedtls_err = 0;
-            esp_err_t err = esp_tls_get_and_clear_last_error((esp_tls_error_handle_t)evt->data, &mbedtls_err, NULL);
-            if (err != 0) {
-                ESP_LOGI(TAG, "Last esp error code: 0x%x", err);
-                ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
-            }
-            if (output_buffer != NULL) {
-                free(output_buffer);
-                output_buffer = NULL;
-            }
-            output_len = 0;
-            break;
-    }
-    return ESP_OK;
-}
-
-HttpClient::HttpClient() {
+HttpsClient::HttpsClient() {
 
 }
 
 
-HttpClient::~HttpClient() {
+HttpsClient::~HttpsClient() {
 
 }
 
 
-void HttpClient::GetRequest(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, const char *REQUEST) {
-    char buf[512];
+void HttpsClient::GetRequest(const char* server, const char *url, const char *path, char* buf, size_t buf_size) {
+    char data[1024];
+    char chunk_size[32];
+    int rcv_size;
+    char *p;
     int ret, len;
     size_t written_bytes = 0;
     esp_tls_t *tls = esp_tls_init();
-	
+    esp_tls_cfg_t cfg = {
+        .crt_bundle_attach = esp_crt_bundle_attach,
+    };
+    if (NULL == buf) {
+        ESP_LOGE(TAG, "null buf!");
+    }
+    
+	std::string request;
+    request.append("GET ");
+    request.append(path);
+    request.append(" HTTP/1.1\r\n");
+    request.append("Host: ");
+    request.append(server);
+    request.append("\r\n");
+    request.append("User-Agent: esp-idf/1.0 esp32\r\n");
+    request.append("\r\n");
+
+    ESP_LOGI(TAG, "req:%s", request.c_str());
+
     if (!tls) {
         ESP_LOGE(TAG, "Failed to allocate esp_tls handle!");
-        goto exit;
+        goto cleanup;
     }
 
-    if (esp_tls_conn_http_new_sync(WEB_SERVER_URL, &cfg, tls) == 1) {
+    if (esp_tls_conn_http_new_sync(url, &cfg, tls) == 1) {
         ESP_LOGI(TAG, "Connection established...");
     } else {
         ESP_LOGE(TAG, "Connection failed...");
@@ -162,8 +89,8 @@ void HttpClient::GetRequest(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, const
 
     do {
         ret = esp_tls_conn_write(tls,
-                                 REQUEST + written_bytes,
-                                 strlen(REQUEST) - written_bytes);
+                                 request.c_str() + written_bytes,
+                                 request.size() - written_bytes);
         if (ret >= 0) {
             ESP_LOGI(TAG, "%d bytes written", ret);
             written_bytes += ret;
@@ -171,14 +98,16 @@ void HttpClient::GetRequest(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, const
             ESP_LOGE(TAG, "esp_tls_conn_write  returned: [0x%02X](%s)", ret, esp_err_to_name(ret));
             goto cleanup;
         }
-    } while (written_bytes < strlen(REQUEST));
+    } while (written_bytes < request.size());
 
     ESP_LOGI(TAG, "Reading HTTP response...");
+    memset((void *)data, 0x00, sizeof(data));
+    rcv_size = 0;
+    len = sizeof(data) - 1;
     do {
-        len = sizeof(buf) - 1;
-        memset(buf, 0x00, sizeof(buf));
-        ret = esp_tls_conn_read(tls, (char *)buf, len);
+        ret = esp_tls_conn_read(tls, (char *)(data + rcv_size), len - rcv_size);
 
+        ESP_LOGI(TAG, "test");
         if (ret == ESP_TLS_ERR_SSL_WANT_WRITE  || ret == ESP_TLS_ERR_SSL_WANT_READ) {
             continue;
         } else if (ret < 0) {
@@ -188,22 +117,35 @@ void HttpClient::GetRequest(esp_tls_cfg_t cfg, const char *WEB_SERVER_URL, const
             ESP_LOGI(TAG, "connection closed");
             break;
         }
-
-        len = ret;
+        rcv_size += ret;
         ESP_LOGD(TAG, "%d bytes read", len);
-        /* Print response directly to stdout as it is read */
-        for (int i = 0; i < len; i++) {
-            putchar(buf[i]);
-        }
-        putchar('\n'); // JSON output doesn't have a newline at end
+//        /* Print response directly to stdout as it is read */
+//        for (int i = 0; i < rcv_size; i++) {
+//            putchar(data[i]);
+//        }
+//        putchar('\n'); // JSON output doesn't have a newline at end
     } while (1);
+
+    p = strstr(data, "\r\n\r\n");
+    if (p) {
+        p = p + 4;
+        int i = 0;
+        do {
+            chunk_size[i] = p[i];
+            i++;
+            if (i > 30) break;
+        } while('\r' != p[i]);
+        chunk_size[i] = '\0';
+        int body_length = strtol(chunk_size, NULL, 16); //
+        ESP_LOGI(TAG, "body length:%d", body_length);
+        if (body_length < buf_size - 1) {
+            memcpy(buf, p + i + 2, body_length);
+            buf[body_length] = '\0';
+        }
+    }
 
 cleanup:
     esp_tls_conn_destroy(tls);
-exit:
-    for (int countdown = 10; countdown >= 0; countdown--) {
-        ESP_LOGI(TAG, "%d...", countdown);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
+    ESP_LOGI(TAG, "connection destroyed");
 }
 

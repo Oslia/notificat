@@ -10,6 +10,8 @@
 !main/system/**
 !components
 !components/**
+!rsc
+!rsc/**
 !storage
 !storage/**
 !.devcontainer

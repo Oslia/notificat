@@ -43,10 +43,11 @@ namespace Weather {
 		double longitude;
 	};
 
-	enum Location {
-		TOKYO,
+	enum City {
+		DEFAULT_CITY,
+		TOKYO = DEFAULT_CITY,
 
-		LOCATION_NUM
+		CITY_NUM
 	};
 
 	class Weather: public App {

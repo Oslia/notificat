@@ -6,7 +6,7 @@
 
 enum class AppState{
 	DESTROYED,
-	STOPPED,
+	BACKGROUND,
 	RUNNING,
 };
 
@@ -20,6 +20,7 @@ public:
 	virtual void OnCreate() {}
 	virtual void OnStart() {}
 	virtual void OnStop() {}
+	virtual void BackgroundRun() {}
 	virtual void OnDestroy() {}
 private:
 };

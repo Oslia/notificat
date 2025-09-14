@@ -7,29 +7,30 @@ LV_IMG_DECLARE(img_notificat);
 
 namespace Alarm {
     Alarm::Alarm() {
-        screen = lv_obj_create(NULL);
-        lv_obj_set_style_bg_color(screen, lv_color_black(), 0);
-        clock = lv_label_create(screen);
-        lv_obj_center(clock);
         icon = &img_notificat;
         name = "alarm";
-        lv_obj_set_style_text_font(clock, &lv_font_montserrat_42, 0);
     }
 
 
     Alarm::~Alarm() {
-        lv_obj_delete(screen);
-        lv_obj_delete(clock);
+		if (nullptr != screen) {
+			lv_obj_delete(screen);
+		}
     }
 
 
     void Alarm::OnStart() {
-
+        screen = lv_obj_create(NULL);
+        lv_obj_set_style_bg_color(screen, lv_color_black(), 0);
+        clock = lv_label_create(screen);
+        lv_obj_center(clock);
+        lv_obj_set_style_text_font(clock, &lv_font_montserrat_42, 0);
     }
 
 
     void Alarm::OnStop() {
-
+        lv_obj_delete(screen);
+        screen = nullptr;
     }
 
 

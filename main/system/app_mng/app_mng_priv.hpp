@@ -14,6 +14,11 @@
 #define APP_LIST_MENU_BTN_HEIGHT	75
 
 class AppMngPriv;
+struct AppEntity {
+	App* instance;
+	AppState state;
+};
+
 
 class AppList: public App, Singleton<AppList> {
 public:
@@ -39,7 +44,7 @@ public:
 	static void Execute(std::string app_name);
 	static void BtnMenuEventHandler(lv_event_t * e);
 
-	static std::vector<std::pair<App*, AppState>> apps;
+	static std::vector<AppEntity> app_entity;
 	static SemaphoreHandle_t mutex;		// For the case of app is run on seperate task
 	static int curr_app;
 	static std::string next_app;

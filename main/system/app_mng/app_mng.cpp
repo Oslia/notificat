@@ -11,6 +11,8 @@
 
 #include "esp_log.h"
 
+#define TAG "app_mng"
+
 LV_IMG_DECLARE(menu_img_release);
 LV_IMG_DECLARE(menu_img_press);
 
@@ -18,7 +20,7 @@ SemaphoreHandle_t AppMngPriv::mutex;
 int AppMngPriv::curr_app = APP_MNG_NULL;
 bool AppMngPriv::execute_req = false;
 std::string AppMngPriv::next_app;
-std::vector<std::pair<App*, AppState>> AppMngPriv::apps;
+std::vector<AppEntity> AppMngPriv::app_entity;
 
 AppMng::AppMng() {
 	impl = new AppMngPriv;
@@ -45,9 +47,9 @@ int AppMng::RegisterApp(App* app) {
 		return -1;
 	}
 	xSemaphoreTake(impl->mutex, portMAX_DELAY);
-	impl->apps.emplace_back(app, AppState::DESTROYED);
+	impl->app_entity.emplace_back(app, AppState::DESTROYED);
 	ESP_LOGI("AppMng", "%s", "RegisterApp");
-	tile = lv_tileview_add_tile(impl->list->tile_view, impl->apps.size() - 2, 0, (lv_dir_t)(LV_DIR_LEFT | LV_DIR_RIGHT));
+	tile = lv_tileview_add_tile(impl->list->tile_view, impl->app_entity.size() - 2, 0, (lv_dir_t)(LV_DIR_LEFT | LV_DIR_RIGHT));
 	lv_obj_set_user_data(tile, (void*)&app->name);
 	lv_obj_add_flag(tile, LV_OBJ_FLAG_EVENT_BUBBLE);
 	impl->list->tile.emplace_back(tile);
@@ -87,7 +89,7 @@ AppMngPriv::AppMngPriv() {
 	lv_obj_add_flag(btn_menu, LV_OBJ_FLAG_HIDDEN);
 
 	list = &AppList::Instance();
-	apps.emplace_back(list, AppState::DESTROYED);
+	app_entity.emplace_back(list, AppState::DESTROYED);
 	next_app = "app_list";
 	execute_req = true;
 }
@@ -103,8 +105,10 @@ void AppMngPriv::Task(void* arg) {
 
 
 void AppMngPriv::Execute(std::string app_name) {
+	xSemaphoreTake(mutex, portMAX_DELAY);
 	next_app = app_name;
 	execute_req = true;
+	xSemaphoreGive(mutex);
 }
 
 
@@ -122,16 +126,19 @@ void AppMngPriv::Manager(void) {
 	if (APP_MNG_NULL != next) {
 		if (next != curr_app) {
 			if (APP_MNG_NULL != curr_app) {
-				apps[curr_app].first->OnStop();
-				apps[curr_app].second = AppState::STOPPED;
+				app_entity[curr_app].instance->OnStop();
+				app_entity[curr_app].state = AppState::BACKGROUND;
+				ESP_LOGI(TAG, "%s set to background", app_entity[curr_app].instance->name.c_str());
 			}
 			curr_app = next;
-			if (AppState::DESTROYED == apps[curr_app].second) {
-				apps[curr_app].first->OnCreate();
+			if (AppState::DESTROYED == app_entity[curr_app].state) {
+				app_entity[curr_app].instance->OnCreate();
+				ESP_LOGI(TAG, "Create %s", app_entity[curr_app].instance->name.c_str());
 			}
-			apps[curr_app].second = AppState::RUNNING;
-			apps[curr_app].first->OnStart();
-			scr = apps[curr_app].first->screen;
+			app_entity[curr_app].state = AppState::RUNNING;
+			app_entity[curr_app].instance->OnStart();
+			ESP_LOGI(TAG, "%s set to running", app_entity[curr_app].instance->name.c_str());
+			scr = app_entity[curr_app].instance->screen;
 			if (nullptr != scr) {
 				lv_scr_load(scr);
 			}
@@ -146,8 +153,12 @@ void AppMngPriv::Manager(void) {
 		}
 	}
 	
-	if (APP_MNG_NULL != curr_app) {
-		apps[curr_app].first->Run();
+	for (AppEntity& app : app_entity) {
+		if (AppState::BACKGROUND == app.state) {
+			app.instance->BackgroundRun();
+		} else if (AppState::RUNNING == app.state) {
+			app.instance->Run();
+		}
 	}
 
 	xSemaphoreGive(mutex);
@@ -157,8 +168,8 @@ void AppMngPriv::Manager(void) {
 
 int AppMngPriv::AppNameToIndex(const std::string& app_name) {
 	int index = 0;
-	for (std::pair<App*, AppState>& app : apps) {
-		if (app.first->name == app_name) {
+	for (AppEntity& app : app_entity) {
+		if (app.instance->name == app_name) {
 			return index;
 		}
 		index++;

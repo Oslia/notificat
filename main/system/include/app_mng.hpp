@@ -14,6 +14,7 @@ public:
 	~AppMng();
 	void Run();
 	int RegisterApp(App* app);
+	void Execute(App* app);
 private:
 	AppMngPriv* impl;
 	friend Singleton;

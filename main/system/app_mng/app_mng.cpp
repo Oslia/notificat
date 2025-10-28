@@ -65,6 +65,13 @@ int AppMng::RegisterApp(App* app) {
 }
 
 
+void AppMng::Execute(App* app) {
+	if (impl->app_entity[impl->curr_app].instance->priority < app->priority) {
+		impl->Execute(app->name);
+	}
+}
+
+
 void AppMngPriv::BtnMenuEventHandler(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
 
@@ -234,4 +241,17 @@ void AppList::EventHandler(lv_event_t* e) {
     default:
        break;
     }
+}
+
+
+App::App() {
+	icon = nullptr;
+	screen = nullptr;
+	priority = AppPriority::PRIORITY1;
+}
+
+
+void App::RequestRun() {
+	AppMng& app_mng = AppMng::Instance();
+	app_mng.Execute(this);
 }

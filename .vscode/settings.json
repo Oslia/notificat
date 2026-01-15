@@ -9,7 +9,7 @@
     "idf.pythonBinPath": "/opt/esp/python_env/idf5.5_py3.12_env/bin/python",
     "idf.toolsPath": "/opt/esp",
     "idf.port": "/dev/ttyACM0",
-    "idf.flashType": "JTAG",
+    "idf.flashType": "UART",
     "files.associations": {
         "*.cpp": "cpp",
         "*.hpp": "cpp",
@@ -20,5 +20,6 @@
         "future": "cpp"
     },
     "editor.insertSpaces": false,
-    "idf.monitorPort": "/dev/ttyACM0"
+    "idf.monitorPort": "/dev/ttyACM0",
+    "idf.pythonInstallPath": "/usr/bin/python3"
 }

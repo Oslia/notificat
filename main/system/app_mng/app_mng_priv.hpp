@@ -20,7 +20,7 @@ struct AppEntity {
 };
 
 
-class AppList: public App, Singleton<AppList> {
+class AppList: public App {
 public:
 	AppList();
 	~AppList();
@@ -33,15 +33,15 @@ public:
 private:
 	static void EventHandler(lv_event_t* e);
 	friend AppMngPriv;
-	friend Singleton;
 };
+
 
 class AppMngPriv {
 public:
 	AppMngPriv();
 
 	static void Task(void*);
-	static void Execute(std::string app_name);
+	static void Execute(const std::string& app_name);
 	static void BtnMenuEventHandler(lv_event_t * e);
 
 	static std::vector<AppEntity> app_entity;
@@ -53,9 +53,7 @@ public:
 	lv_obj_t* btn_menu;
 	void Manager();
 	int AppNameToIndex(const std::string& app_name);
-	AppList* list;
-
-	friend AppList;
+	AppList list;
 };
 
 #endif	// APP_MNG_PRIV_HPP_

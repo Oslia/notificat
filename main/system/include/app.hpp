@@ -10,21 +10,8 @@ enum class AppState {
 	RUNNING,
 };
 
-enum class AppPriority {
-	PRIORITY1,		// LOW
-	PRIORITY2,
-	PRIORITY3,
-	PRIORITY4,
-	PRIORITY5,		// HIGH
-};
-
 class App {
 public:
-	std::string name;
-	const lv_image_dsc_t* icon;
-	lv_obj_t* screen;
-	AppPriority priority;
-
 	App();
 	virtual ~App() {}
 	virtual void Run() = 0;
@@ -34,7 +21,17 @@ public:
 	virtual void BackgroundRun() {}
 	virtual void OnDestroy() {}
 	void RequestRun();
-private:
+
+	void SetName(const std::string& name);
+	const std::string& GetName() const;
+
+	const lv_image_dsc_t* icon;
+
+protected:
+	std::string name;
+	lv_obj_t* screen;
+
+	friend class AppMngPriv;
 };
 
 #endif	// APP_HPP_

@@ -49,10 +49,10 @@ int AppMng::RegisterApp(App* app) {
 	xSemaphoreTake(impl->mutex, portMAX_DELAY);
 	impl->app_entity.emplace_back(app, AppState::DESTROYED);
 	ESP_LOGI("AppMng", "%s", "RegisterApp");
-	tile = lv_tileview_add_tile(impl->list->tile_view, impl->app_entity.size() - 2, 0, (lv_dir_t)(LV_DIR_LEFT | LV_DIR_RIGHT));
-	lv_obj_set_user_data(tile, (void*)&app->name);
+	tile = lv_tileview_add_tile(impl->list.tile_view, impl->app_entity.size() - 2, 0, (lv_dir_t)(LV_DIR_LEFT | LV_DIR_RIGHT));
+	lv_obj_set_user_data(tile, (void*)app);
 	lv_obj_add_flag(tile, LV_OBJ_FLAG_EVENT_BUBBLE);
-	impl->list->tile.emplace_back(tile);
+//	impl->list->tile.emplace_back(tile);
 	if (nullptr != app->icon) {
 		img = lv_image_create(tile);
 		lv_image_set_src(img, app->icon);
@@ -66,9 +66,7 @@ int AppMng::RegisterApp(App* app) {
 
 
 void AppMng::Execute(App* app) {
-	if (impl->app_entity[impl->curr_app].instance->priority < app->priority) {
-		impl->Execute(app->name);
-	}
+	impl->Execute(app->GetName());
 }
 
 
@@ -95,8 +93,8 @@ AppMngPriv::AppMngPriv() {
 	lv_obj_set_pos(btn_menu, LV_HOR_RES - APP_LIST_MENU_BTN_WIDTH - 10, LV_VER_RES - APP_LIST_MENU_BTN_HEIGHT - 10);
 	lv_obj_add_flag(btn_menu, LV_OBJ_FLAG_HIDDEN);
 
-	list = &AppList::Instance();
-	app_entity.emplace_back(list, AppState::DESTROYED);
+//	list = &AppList::Instance();
+	app_entity.emplace_back(&list, AppState::DESTROYED);
 	next_app = "app_list";
 	execute_req = true;
 }
@@ -111,7 +109,7 @@ void AppMngPriv::Task(void* arg) {
 }
 
 
-void AppMngPriv::Execute(std::string app_name) {
+void AppMngPriv::Execute(const std::string& app_name) {
 	xSemaphoreTake(mutex, portMAX_DELAY);
 	next_app = app_name;
 	execute_req = true;
@@ -219,7 +217,7 @@ void AppList::Run(void) {
 void AppList::EventHandler(lv_event_t* e) {
     lv_event_code_t code = lv_event_get_code(e);
 	lv_obj_t* tileview = lv_event_get_target_obj(e);
-	std::string* app_name = (std::string*)lv_obj_get_user_data(tileview);
+	App* app = (App*)lv_obj_get_user_data(tileview);
     switch(code) {
     case LV_EVENT_PRESSED:
         break;
@@ -232,7 +230,7 @@ void AppList::EventHandler(lv_event_t* e) {
 	case LV_EVENT_RELEASED:
 		break;
     case LV_EVENT_LONG_PRESSED: {
-		AppMngPriv::Execute(*app_name);
+		AppMngPriv::Execute(app->GetName());
 		break;
 	}
     case LV_EVENT_LONG_PRESSED_REPEAT:
@@ -247,7 +245,15 @@ void AppList::EventHandler(lv_event_t* e) {
 App::App() {
 	icon = nullptr;
 	screen = nullptr;
-	priority = AppPriority::PRIORITY1;
+}
+
+void App::SetName(const std::string& name) {
+	this->name = name;
+}
+
+
+const std::string& App::GetName() const {
+	return name;
 }
 
 

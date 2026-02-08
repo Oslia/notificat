@@ -5,19 +5,17 @@
 #include "alarm.hpp"
 #include "app_mng.hpp"
 
-LV_IMG_DECLARE(img_notificat);
+LV_IMG_DECLARE(img_alarm);
 
 namespace Alarm {
     Alarm::Alarm() {
-        screen = lv_obj_create(NULL);
-        icon = &img_notificat;
+        icon = &img_alarm;
         SetName("alarm");
-        v = new ClockComponent(screen);
+        v = new ClockComponent(GetScene());
     }
 
 
     Alarm::~Alarm() {
-		lv_obj_delete(screen);
         delete v;
     }
 
@@ -69,7 +67,9 @@ namespace Alarm {
         container = lv_obj_create(parent);
         lv_obj_remove_style_all(container);
         lv_obj_set_size(container, LV_HOR_RES, LV_VER_RES);
-        lv_obj_set_style_bg_color(container, lv_color_black(), 0);
+        lv_obj_set_style_bg_color(container, lv_color_black(), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(container, LV_OPA_COVER, LV_PART_MAIN);
+        
         clock = lv_label_create(container);
         lv_obj_center(clock);
         lv_obj_set_style_text_font(clock, &lv_font_montserrat_42, 0);

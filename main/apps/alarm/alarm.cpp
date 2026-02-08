@@ -33,7 +33,7 @@ namespace Alarm {
 
 
     void Alarm::Run() {
-        Update(model, Msg("Update"));
+        Update(model, AppMsg("Update"));
     }
 
 
@@ -47,33 +47,12 @@ namespace Alarm {
     }
 
 
-    void Alarm::Update(AlarmState& model, const Msg& msg) {
+    void Alarm::Update(AlarmState& model, const AppMsg& msg) {
         if (msg.GetName() == std::string_view("Update")) {
             time(&model.now);
             localtime_r(&model.now, &model.timeinfo);
             v->SetTime(model.timeinfo);
         }
-    }
-
-	Msg::Msg(std::string_view name): name(name) {
-
-    }
-
-
-    template <class T>
-    void Msg::SetPayload(T payload) {
-        this->payload = payload;
-    }
-
-
-    std::string_view Msg::GetName() const {
-        return name;
-    }
-    
-
-    template <class T>
-    const T* Msg::GetPayload() {
-        return std::any_cast<T>(&payload);
     }
 
 

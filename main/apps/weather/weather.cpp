@@ -27,7 +27,7 @@ namespace Weather {
 // ====================
 	Weather::Weather() {
 		icon = &weather_img;
-		name = "weather";
+		SetName("weather");
 		weather = new WeatherPriv;
 		weather->UpdateWeather();
 		weather->last_update_time = esp_timer_get_time();
@@ -35,18 +35,16 @@ namespace Weather {
 
 	
 	Weather::~Weather() {
-		if (nullptr != screen) {
-			lv_obj_delete(screen);
-		}
-
 		delete weather;
 	}
 
 	
 	void Weather::OnStart() {
-		screen = lv_obj_create(NULL);
-        lv_obj_set_style_bg_color(screen, lv_color_black(), 0);
-		container_weather_now = lv_image_create(screen);
+		lv_obj_t* scene = GetScene();
+        lv_obj_set_style_bg_color(scene, lv_color_black(), 0);
+        lv_obj_set_style_bg_opa(scene, LV_OPA_COVER, LV_PART_MAIN);
+		
+		container_weather_now = lv_image_create(scene);
 		const lv_image_dsc_t* icon = weather->GetWeatherIcon(weather->weather_code_for_day[0]);
 		lv_image_set_src(container_weather_now, icon);
 		lv_obj_align(container_weather_now, LV_ALIGN_CENTER, 0, 0);
@@ -55,8 +53,7 @@ namespace Weather {
 
 
 	void Weather::OnStop() {
-		lv_obj_delete(screen);
-		screen = nullptr;
+
 	}
 
 

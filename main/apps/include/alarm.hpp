@@ -5,24 +5,6 @@
 #include "app.hpp"
 
 namespace Alarm {
-	class Msg {
-	public:
-		Msg(std::string_view name);
-
-		template <class T>
-		void SetPayload(T payload);
-
-		std::string_view GetName() const;
-
-		template <class T>
-		const T* GetPayload();
-
-	private:
-		std::string name;
-		std::any payload;
-	};
-
-
 	class ButtonClick {
 	public:
 	};
@@ -71,7 +53,7 @@ namespace Alarm {
 
 		void OnDestroy() override;
 
-		void Update(AlarmState& model, const Msg& msg);
+		void Update(AlarmState& model, const AppMsg& msg);
 
 	private:
 		ClockComponent* v;

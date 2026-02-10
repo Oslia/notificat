@@ -23,25 +23,49 @@ namespace Weather {
 	typedef struct {
 		enum City city;
 	} WeatherConfig;
-	
-	constexpr struct GCS location[City::CITY_NUM] = {
-		{35.6895, 139.6917},		// TOKYO
-	};
-	
-	class WeatherPriv {
-	public:
-		WeatherPriv();
-		~WeatherPriv();
-		void UpdateWeather();
-		const lv_image_dsc_t* GetWeatherIcon(WeatherCode code);
-		void SetLocation(City city);
-		void SaveConfig();
-		void LoadConfig();
+
+	struct WeatherModel {
 		WeatherConfig config;
 		WeatherCode weather_code_for_day[7];
 		WeatherCode weather_code_for_3h[8];
 		int64_t last_update_time;
 		jsmn_parser jsmn_config;
+
+		const struct GCS location[City::CITY_NUM] = {
+			{35.6895, 139.6917},		// TOKYO
+		};
+	};
+
+	class CurrentWeatherComponent {
+	public:
+		CurrentWeatherComponent(lv_obj_t* parent);
+
+		void SetWeather(WeatherCode code);
+
+		const lv_image_dsc_t* GetWeatherIcon(WeatherCode code);
+		
+		lv_obj_t* container_weather_now;
+	};
+	
+	class WeatherPriv {
+	public:
+		WeatherPriv();
+
+		~WeatherPriv();
+
+		void UpdateWeather();
+
+		void SetLocation(City city);
+
+		void SaveConfig();
+
+		void LoadConfig();
+
+		lv_obj_t* container_weather_3h;
+
+		WeatherModel model;
+		
+		CurrentWeatherComponent* current_weather_component;
 	};
 }
 

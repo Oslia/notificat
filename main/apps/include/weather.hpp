@@ -59,8 +59,6 @@ namespace Weather {
 		void Run() override;
 	private:
 		class WeatherPriv* weather;
-		lv_obj_t* container_weather_now;
-		lv_obj_t* container_weather_3h;
 	};
 }
 #endif	// APPS_WEATHER_HPP_

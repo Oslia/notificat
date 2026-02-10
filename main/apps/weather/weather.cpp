@@ -30,7 +30,7 @@ namespace Weather {
 		SetName("weather");
 		weather = new WeatherPriv;
 		weather->UpdateWeather();
-		weather->last_update_time = esp_timer_get_time();
+		weather->model.last_update_time = esp_timer_get_time();
 	}
 
 	
@@ -41,14 +41,10 @@ namespace Weather {
 	
 	void Weather::OnStart() {
 		lv_obj_t* scene = GetScene();
-        lv_obj_set_style_bg_color(scene, lv_color_black(), 0);
-        lv_obj_set_style_bg_opa(scene, LV_OPA_COVER, LV_PART_MAIN);
+
 		
-		container_weather_now = lv_image_create(scene);
-		const lv_image_dsc_t* icon = weather->GetWeatherIcon(weather->weather_code_for_day[0]);
-		lv_image_set_src(container_weather_now, icon);
-		lv_obj_align(container_weather_now, LV_ALIGN_CENTER, 0, 0);
-		lv_image_set_scale(container_weather_now, 512);
+		weather->current_weather_component = new CurrentWeatherComponent(GetScene());
+		weather->current_weather_component->SetWeather(weather->model.weather_code_for_day[0]);
 	}
 
 
@@ -58,6 +54,10 @@ namespace Weather {
 
 
 	void Weather::Run() {
+//		if (1 hour passed) {
+//			weather->UpdateWeather();
+//			weather->current_weather_component->SetWeather(weather->model.weather_code_for_day[0]);
+//		}
 		return;
 	}
 
@@ -81,13 +81,13 @@ namespace Weather {
 		if (nullptr == buf) {
 			return;
 		}
-		
+
 		LoadConfig();
 
 		std::string path;
 		path += "/v1/forecast?";
-		path += std::format("latitude={}", location[config.city].latitude);
-		path += std::format("&longitude={}", location[config.city].longitude);
+		path += std::format("latitude={}", model.location[model.config.city].latitude);
+		path += std::format("&longitude={}", model.location[model.config.city].longitude);
 		path += "&daily=weather_code,temperature_2m_max,temperature_2m_min";
 		path += "&timezone=Asia/Tokyo";
 
@@ -116,7 +116,7 @@ namespace Weather {
 			if (json_arr_get_int(&jparse_ctx, i, &code) == OS_SUCCESS) {
 				ESP_LOGI(TAG, "  [%d] = %d\n", i, code);
 				if (i < 7) {
-					weather_code_for_day[i] = static_cast<WeatherCode>(code);
+					model.weather_code_for_day[i] = static_cast<WeatherCode>(code);
 				}
 			} else {
 				ESP_LOGI(TAG, "  [%d] = error\n", i);
@@ -130,7 +130,65 @@ namespace Weather {
 	}
 
 
-	const lv_image_dsc_t* WeatherPriv::GetWeatherIcon(WeatherCode code) {
+	void WeatherPriv::SetLocation(enum City city) {
+		model.config.city = city;
+		SaveConfig();
+	}
+
+	
+	void WeatherPriv::SaveConfig() {
+		FILE* f;
+		f = fopen(WEATHER_CONFIG_FILE_PATH WEATHER_CONFIG_FILE, "w");
+		if (NULL == f) {
+			ESP_LOGI(TAG, "fail to save weather config\n");
+			return;
+		}
+		//[TODO] .ini
+		fprintf(f, "%d", model.config.city);
+		fclose(f);
+	}
+
+	
+	void WeatherPriv::LoadConfig() {
+		FILE* f;
+		f = fopen(WEATHER_CONFIG_FILE_PATH WEATHER_CONFIG_FILE, "r");
+		if (NULL == f) {
+			model.config.city = DEFAULT_CITY;		// default
+			SaveConfig();
+			ESP_LOGI(TAG, "weather fail to read file");
+		} else {
+			//[TODO] .ini
+			int temp;
+			fscanf(f, "%d", &temp);
+			fclose(f);
+			model.config.city = static_cast<City>(temp);
+			ESP_LOGI(TAG, "weater config:%d", temp);
+		}
+	}
+
+
+// ====================
+// CurrentWeatherComponent
+// ====================
+	CurrentWeatherComponent::CurrentWeatherComponent(lv_obj_t* parent) {
+		lv_obj_t* container = lv_obj_create(parent);
+		lv_obj_remove_style_all(container);
+		lv_obj_set_size(container, LV_HOR_RES, LV_VER_RES);
+        lv_obj_set_style_bg_color(container, lv_color_black(), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(container, LV_OPA_COVER, LV_PART_MAIN);
+
+		container_weather_now = lv_image_create(container);
+		lv_obj_align(container_weather_now, LV_ALIGN_CENTER, 0, 0);
+		lv_image_set_scale(container_weather_now, 1024);
+	}
+
+
+	void CurrentWeatherComponent::SetWeather(WeatherCode code) {
+		lv_image_set_src(container_weather_now, GetWeatherIcon(code));
+	}
+
+
+	const lv_image_dsc_t* CurrentWeatherComponent::GetWeatherIcon(WeatherCode code) {
 		if (90 <= code) {
 			return &img_thunderstorm;
 		}
@@ -174,41 +232,5 @@ namespace Weather {
 		return &img_sunny;		// Unknown code
 	}
 
-
-	void WeatherPriv::SetLocation(enum City city) {
-		config.city = city;
-		SaveConfig();
-	}
-
-	
-	void WeatherPriv::SaveConfig() {
-		FILE* f;
-		f = fopen(WEATHER_CONFIG_FILE_PATH WEATHER_CONFIG_FILE, "w");
-		if (NULL == f) {
-			ESP_LOGI(TAG, "fail to save weather config\n");
-			return;
-		}
-		//[TODO] .ini
-		fprintf(f, "%d", config.city);
-		fclose(f);
-	}
-
-	
-	void WeatherPriv::LoadConfig() {
-		FILE* f;
-		f = fopen(WEATHER_CONFIG_FILE_PATH WEATHER_CONFIG_FILE, "r");
-		if (NULL == f) {
-			config.city = DEFAULT_CITY;		// default
-			SaveConfig();
-			ESP_LOGI(TAG, "weather fail to read file");
-		} else {
-			//[TODO] .ini
-			int temp;
-			fscanf(f, "%d", &temp);
-			fclose(f);
-			config.city = static_cast<City>(temp);
-			ESP_LOGI(TAG, "weater config:%d", temp);
-		}
-	}
 }
 

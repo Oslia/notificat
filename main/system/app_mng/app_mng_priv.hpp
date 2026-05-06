@@ -10,8 +10,8 @@
 
 #define APP_MNG_APP_LIST_BAR_SIZE	10
 
-#define APP_LIST_MENU_BTN_WIDTH		75
-#define APP_LIST_MENU_BTN_HEIGHT	75
+#define ALARM_ADD_BTN_WIDTH		75
+#define ALARM_ADD_BTN_HEIGHT	75
 
 class AppMngPriv;
 struct AppEntity {
@@ -60,13 +60,16 @@ public:
 	void Manager();
 
 	int AppNameToIndex(const std::string& app_name);
+	
+	void Update(AppModel& model, const AppMsg& msg);
+
+	App* GetApp(std::string_view app_name);
 
 	static SemaphoreHandle_t mutex;		// For the case of app is run on seperate task
 	static bool execute_req;
 
 	static AppModel model;
 
-	void Update(AppModel& model, const AppMsg& msg);
 private:
 	int current_tile;
 	AppListComponent* app_list;

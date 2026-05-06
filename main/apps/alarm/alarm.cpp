@@ -1,9 +1,11 @@
+// alarm.cpp
+
 #include <memory>
-#include <type_traits>
 #include "lvgl.h"
+#include "app_mng.hpp"
+
 #include "alarm_priv.hpp"
 #include "alarm.hpp"
-#include "app_mng.hpp"
 
 LV_IMG_DECLARE(img_alarm);
 
@@ -11,80 +13,137 @@ namespace Alarm {
     Alarm::Alarm() {
         icon = &img_alarm;
         SetName("alarm");
-        v = new ClockComponent(GetScene());
+        impl = std::make_unique<AlarmPriv>();
     }
 
 
     Alarm::~Alarm() {
-        delete v;
+
     }
 
 
     void Alarm::OnCreate() {
+        impl->model.alarm_data[0].hour = 8;
+        impl->model.alarm_data[0].min = 0;
+        impl->model.alarm_data[0].days = 0x3E;  // Monday to Friday
 
+        
+        impl->model.alarm_data[1].hour = 8;
+        impl->model.alarm_data[1].min = 30;
+        impl->model.alarm_data[1].days = 0x7F;  // Everyday
+
+        
+        impl->model.alarm_data[2].hour = 9;
+        impl->model.alarm_data[2].min = 0;
+        impl->model.alarm_data[2].days = 0x01;  // Sunday
+
+        impl->model.alarm_num = 3;
     }
 
 
     void Alarm::OnStart() {
-
+        impl->main_view = std::make_unique<MainView>();
+        impl->alarm_edit_view = std::make_unique<AlarmEditView>();
+        SwitchView(impl->main_view.get());
+        impl->main_view->Draw(impl->model);
     }
 
 
     void Alarm::Run() {
-        Update(model, AppMsg("Update"));
-    }
-
-
-    void Alarm::OnStop() {
-
-    }
-
-
-    void Alarm::OnDestroy() {
-
-    }
-
-
-    void Alarm::Update(AlarmState& model, const AppMsg& msg) {
-        if (msg.GetName() == std::string_view("Update")) {
-            time(&model.now);
-            localtime_r(&model.now, &model.timeinfo);
-            v->SetTime(model.timeinfo);
+        static int cnt = 0;
+        AppMsg msg("Update");
+        if (++cnt > 100) {  // 適当
+            cnt = 0;
+            Dispatch("alarm", msg);
+            if (nullptr != impl->main_view) {
+                impl->main_view->Draw(impl->model);
+            }
         }
     }
 
 
-    AlarmState::AlarmState() {
-        time(&now);
-        localtime_r(&now, &timeinfo);
+    void Alarm::OnStop() {
+        impl->main_view.reset();
+    }
+
+
+    void Alarm::OnDestroy() {
+        
     }
 
     
-    ClockComponent::ClockComponent(lv_obj_t* parent) {
-	    lv_obj_t* tile_clock;
-        lv_obj_t* tile_set_alarm;
-        
-        container = lv_obj_create(parent);
-        lv_obj_remove_style_all(container);
-        lv_obj_set_size(container, LV_HOR_RES, LV_VER_RES);
-        lv_obj_set_style_bg_color(container, lv_color_black(), LV_PART_MAIN);
-        lv_obj_set_style_bg_opa(container, LV_OPA_COVER, LV_PART_MAIN);
-        
-        clock = lv_label_create(container);
-        lv_obj_center(clock);
-        lv_obj_set_style_text_font(clock, &lv_font_montserrat_42, 0);
+    void Alarm::Notify(const AppMsg& msg) {
+        AlarmViewId prev_view_id = impl->model.view_id;
+        impl->Update(impl->model, msg);
+
+        if (prev_view_id != impl->model.view_id) {
+            switch (impl->model.view_id) {
+                case AlarmViewId::VIEW_MAIN:
+                    SwitchView(impl->main_view.get());
+                    break;
+                case AlarmViewId::VIEW_ALARM_SET:
+                    SwitchView(impl->alarm_edit_view.get());
+                    break;
+                default:
+                    break;
+            }
+        }
+        switch (impl->model.view_id) {
+            case AlarmViewId::VIEW_MAIN:
+                impl->main_view->Draw(impl->model);
+                break;
+            case AlarmViewId::VIEW_ALARM_SET:
+                impl->alarm_edit_view->Draw(impl->model);
+                break;
+            default:
+                break;
+        }
     }
 
 
-    ClockComponent::~ClockComponent() {
-        lv_obj_delete(container);
+    AlarmPriv::AlarmPriv() {
+        time(&model.now);
+        localtime_r(&model.now, &model.timeinfo);
+        model.view_id = AlarmViewId::VIEW_MAIN;
     }
 
 
-    void ClockComponent::SetTime(struct tm& tm) {
-        char time_buf[64];
-        sprintf(time_buf, "%2d:%02d", tm.tm_hour, tm.tm_min);
-        //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-        lv_label_set_text(clock, time_buf);
+    void AlarmPriv::Update(AlarmState& model, const AppMsg& msg) {
+        if (msg.GetName() == std::string_view("Update")) {
+            time(&model.now);
+            localtime_r(&model.now, &model.timeinfo);
+        }
+        if (msg.GetName() == std::string_view("AlarmAddBtnClicked")) {
+            model.view_id = AlarmViewId::VIEW_ALARM_SET;
+            model.editing_alarm.hour = 8;
+            model.editing_alarm.min = 0;
+            model.editing_alarm.days = 0x00;
+            model.editing_alarm.repeat = false;
+            model.editing_alarm.activated = false;
+            model.editing_index = model.alarm_num;
+        }
+        if (msg.GetName() == std::string_view("AlarmListBtnClicked")) {
+            int index = *msg.GetPayload<int>();
+            if (index >= 0 && index < model.alarm_num) {
+                model.view_id = AlarmViewId::VIEW_ALARM_SET;
+                model.editing_alarm = model.alarm_data[index];
+                model.editing_index = index;
+            }
+        }
+        if (msg.GetName() == std::string_view("AlarmSave")) {
+            if (model.editing_alarm.hour < 24 && model.editing_alarm.min < 60) {
+                if (model.alarm_num < ALARM_MAX_NUM) {
+                    model.alarm_data[model.editing_index] = model.editing_alarm;
+                }
+                model.alarm_num++;
+            }
+            model.view_id = AlarmViewId::VIEW_MAIN;
+        }
+        if (msg.GetName() == std::string_view("AlarmToggleDay")) {
+            int day = *msg.GetPayload<int>();
+            if (day >= 0 && day < 7) {
+                model.editing_alarm.days ^= (1 << day);
+            }
+        }
     }
 }

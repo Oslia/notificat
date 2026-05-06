@@ -2,6 +2,8 @@
 #define APPS_ALARM_HPP_
 
 #include <any>
+#include <memory>
+
 #include "app.hpp"
 
 namespace Alarm {
@@ -12,28 +14,6 @@ namespace Alarm {
 
 	class Updates {
 	public:
-	};
-
-
-	class AlarmState {
-	public:
-		AlarmState();
-		time_t now;
-        struct tm timeinfo;
-	};
-
-	
-	class ClockComponent {
-	public:
-		ClockComponent(lv_obj_t* parent);
-		~ClockComponent();
-		void SetTime(struct tm& tm);
-
-
-	private:
-		lv_obj_t* container;
-		lv_obj_t* clock;
-		lv_obj_t* tile_view;
 	};
 
 
@@ -53,11 +33,13 @@ namespace Alarm {
 
 		void OnDestroy() override;
 
-		void Update(AlarmState& model, const AppMsg& msg);
+		void Notify(const AppMsg& msg) override;
+
+		void Update(const AppMsg& msg);
+
 
 	private:
-		ClockComponent* v;
-		AlarmState model;
+		std::unique_ptr<class AlarmPriv> impl;
 	};
 }
 	

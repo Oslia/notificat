@@ -62,6 +62,10 @@ namespace Weather {
 	}
 
 
+	void Weather::Notify(const AppMsg& msg) {
+		weather->Notify(msg);
+	}
+
 // ====================
 // WeatherPriv
 // ====================
@@ -75,12 +79,14 @@ namespace Weather {
 	}
 
 
+	void WeatherPriv::Notify(const AppMsg& msg) {
+
+	}
+
+
 	void WeatherPriv::UpdateWeather() {
 		HttpsClient http_client;
-		char* buf = new char[1024];
-		if (nullptr == buf) {
-			return;
-		}
+		char buf[1024];
 
 		LoadConfig();
 
@@ -102,7 +108,10 @@ namespace Weather {
 		ESP_LOGI(TAG, "data:%s", buf);
 
 		jparse_ctx_t jparse_ctx;
-		json_parse_start(&jparse_ctx, buf, strlen(buf));
+		if (json_parse_start(&jparse_ctx, buf, strlen(buf)) != OS_SUCCESS) {
+			ESP_LOGI(TAG, "json parse error\n");
+			return;
+		}
 		
 		char json_buf[256];
 		json_obj_get_object(&jparse_ctx, "daily");
@@ -124,7 +133,6 @@ namespace Weather {
 		}
 
 		json_parse_end(&jparse_ctx);
-		delete[] buf;
 		
 		return;
 	}

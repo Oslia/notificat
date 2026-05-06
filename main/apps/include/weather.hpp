@@ -57,6 +57,7 @@ namespace Weather {
 		void OnStart() override;
 		void OnStop() override;
 		void Run() override;
+		void Notify(const AppMsg& msg) override;
 	private:
 		class WeatherPriv* weather;
 	};

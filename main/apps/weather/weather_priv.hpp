@@ -53,6 +53,8 @@ namespace Weather {
 
 		~WeatherPriv();
 
+		void Notify(const AppMsg& msg);
+
 		void UpdateWeather();
 
 		void SetLocation(City city);

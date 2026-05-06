@@ -1,3 +1,5 @@
+// app_mng.cpp
+
 #include <vector>
 #include <functional>
 #include <string>
@@ -21,9 +23,31 @@ SemaphoreHandle_t AppMngPriv::mutex;
 AppModel AppMngPriv::model;
 bool AppMngPriv::execute_req;
 lv_obj_t* scene_storage;
+AppMngPriv* app_mng_priv = nullptr;
+
+
+lv_obj_t* CreateContainer() {
+	lv_obj_t* container = lv_obj_create(scene_storage);
+	lv_obj_remove_style_all(container);
+	lv_obj_set_size(container, LV_HOR_RES, LV_VER_RES);
+
+	return container;
+}
+
+
+void Dispatch(std::string_view app_name, const AppMsg& msg) {
+	if (nullptr != app_mng_priv) {
+		App* app = app_mng_priv->GetApp(app_name);
+		if (app) {
+			app->Notify(msg);
+		}
+	}
+}
+
 
 AppMng::AppMng() {
-	impl = new AppMngPriv;
+	app_mng_priv = new AppMngPriv;
+	impl = app_mng_priv;
 }
 
 
@@ -36,7 +60,8 @@ AppMng::~AppMng() {
 
 
 void AppMng::Run() {
-	xTaskCreate(impl->Task, "AppMng", 4096, impl, 1, NULL);
+	//xTaskCreate(impl->Task, "AppMng", 4096, impl, 1, NULL);
+	impl->Task(impl);
 }
 
 
@@ -75,6 +100,7 @@ AppMngPriv::AppMngPriv() {
 	lv_obj_set_size(main_container, LV_HOR_RES, LV_VER_RES);
 	lv_obj_add_flag(main_container, LV_OBJ_FLAG_SNAPPABLE);
     lv_obj_set_scroll_snap_y(main_container, LV_SCROLL_SNAP_END);
+    lv_obj_remove_flag(main_container, LV_OBJ_FLAG_SCROLL_ELASTIC);
 
 	app_area = lv_obj_create(main_container);
 	lv_obj_remove_style_all(app_area);
@@ -86,7 +112,6 @@ AppMngPriv::AppMngPriv() {
 	lv_obj_remove_style_all(slide_menu_area);
 	lv_obj_set_size(slide_menu_area, LV_HOR_RES, LV_VER_RES + PULL_BAR_AREA);
 	lv_obj_set_pos(slide_menu_area, 0, LV_VER_RES - PULL_BAR_AREA);
-    lv_obj_remove_flag(slide_menu_area, LV_OBJ_FLAG_SCROLL_ELASTIC);
 
 	lv_obj_t* list_area = lv_obj_create(main_container);
 	lv_obj_remove_style_all(list_area);
@@ -105,10 +130,10 @@ AppMngPriv::AppMngPriv() {
 
 void AppMngPriv::Task(void* arg) {
 	AppMngPriv* self = static_cast<AppMngPriv*>(arg);
-	while(1) {
+//	while(1) {
 		self->Manager();
-		vTaskDelay(pdMS_TO_TICKS(50));
-	}
+//		vTaskDelay(pdMS_TO_TICKS(50));
+//	}
 }
 
 
@@ -193,7 +218,23 @@ void AppMngPriv::Update(AppModel& model, const AppMsg& msg) {
 }
 
 
+App* AppMngPriv::GetApp(std::string_view app_name) {
+	for (auto app : model.app_entity) {
+		if (app.instance->GetName() == app_name) {
+			return app.instance;
+		}
+	}
+
+	return nullptr;
+}
+
+
 AppMsg::AppMsg(std::string_view name): name(name) {
+
+}
+
+
+AppMsg::AppMsg(std::string_view name, std::any payload): name(name), payload(payload) {
 
 }
 
@@ -206,12 +247,6 @@ void AppMsg::SetPayload(T payload) {
 
 std::string_view AppMsg::GetName() const {
 	return name;
-}
-
-
-template <class T>
-const T* AppMsg::GetPayload() {
-	return std::any_cast<T>(&payload);
 }
 
 
@@ -288,6 +323,7 @@ App::App() {
 	scene = lv_obj_create(scene_storage);
 	lv_obj_remove_style_all(scene);
 	lv_obj_set_size(scene, LV_HOR_RES, LV_VER_RES);
+	current_view = nullptr;
 }
 
 
@@ -315,3 +351,15 @@ void App::RequestRun() {
 	AppMng& app_mng = AppMng::Instance();
 	app_mng.Execute(this);
 }
+
+
+lv_obj_t* App::GetSceneStorage() {
+	return scene_storage;
+}
+
+
+template <class Model>
+void State<Model>::Link(std::unique_ptr<View<Model>> view) {
+	views.push_back(view);
+}
+

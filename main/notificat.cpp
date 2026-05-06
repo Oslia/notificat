@@ -87,9 +87,8 @@ void app_main(void)
     Weather::Weather weather;
     mng.RegisterApp(&alarm);
     mng.RegisterApp(&weather);
-    mng.Run();
 #if LOG_MEM_INFO
-    //static char buffer[128];    /* Make sure buffer is enough for `sprintf` */
+    static char buffer[128];    /* Make sure buffer is enough for `sprintf` */
     while (1) {
         //sprintf(buffer, "   Biggest /     Free /    Total\n"
         //        "\t  SRAM : [%8d / %8d / %8d]\n"
@@ -104,7 +103,8 @@ void app_main(void)
         //time(&now);
         //localtime_r(&now, &timeinfo);
         //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        mng.Run();
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 #endif
     ESP_ERROR_CHECK(esp_vfs_fat_spiflash_unmount_rw_wl(base_path, s_wl_handle));

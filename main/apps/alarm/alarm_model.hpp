@@ -29,6 +29,7 @@ namespace Alarm {
 		int alarm_num;
 		int editing_index;
 		AlarmData editing_alarm;
+		bool alarm_save_flag;		//# false: edit, true: add
 	};
 }
 

@@ -121,6 +121,7 @@ namespace Alarm {
             model.editing_alarm.repeat = false;
             model.editing_alarm.activated = false;
             model.editing_index = model.alarm_num;
+            model.alarm_save_flag = true;		// add
         }
         if (msg.GetName() == std::string_view("AlarmListBtnClicked")) {
             int index = *msg.GetPayload<int>();
@@ -128,6 +129,7 @@ namespace Alarm {
                 model.view_id = AlarmViewId::VIEW_ALARM_SET;
                 model.editing_alarm = model.alarm_data[index];
                 model.editing_index = index;
+                model.alarm_save_flag = false;		// edit
             }
         }
         if (msg.GetName() == std::string_view("AlarmSave")) {
@@ -135,7 +137,9 @@ namespace Alarm {
                 if (model.alarm_num < ALARM_MAX_NUM) {
                     model.alarm_data[model.editing_index] = model.editing_alarm;
                 }
-                model.alarm_num++;
+                if (model.alarm_save_flag) {
+                    model.alarm_num++;
+                }
             }
             model.view_id = AlarmViewId::VIEW_MAIN;
         }

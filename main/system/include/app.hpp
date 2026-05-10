@@ -88,10 +88,12 @@ public:
 	void RequestRun();
 	template <class Model>
 	void SwitchView(View<Model>* view) {
+		lv_obj_t* next = view->GetContainer();
 		if (nullptr != current_view) {
 			lv_obj_set_parent(current_view, GetSceneStorage());
 		}
-		lv_obj_set_parent(view->GetContainer(), scene);
+		lv_obj_set_parent(next, scene);
+		current_view = next;
 	}
 
 	void SetName(const std::string& name);

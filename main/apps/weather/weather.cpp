@@ -33,8 +33,8 @@ namespace Weather {
 		weather->model.last_update_time = esp_timer_get_time();
 	}
 
-	
 	Weather::~Weather() {
+		
 		delete weather;
 	}
 
@@ -44,7 +44,9 @@ namespace Weather {
 
 		
 		weather->current_weather_component = new CurrentWeatherComponent(GetScene());
+		pthread_mutex_lock(&weather->mutex);
 		weather->current_weather_component->SetWeather(weather->model.weather_code_for_day[0]);
+		pthread_mutex_unlock(&weather->mutex);
 	}
 
 
@@ -63,19 +65,29 @@ namespace Weather {
 
 
 	void Weather::Notify(const AppMsg& msg) {
+		pthread_mutex_lock(&weather->mutex);
 		weather->Notify(msg);
+		pthread_mutex_unlock(&weather->mutex);
 	}
 
 // ====================
 // WeatherPriv
 // ====================
 	WeatherPriv::WeatherPriv() {
-		
+		mutex = PTHREAD_MUTEX_INITIALIZER;
 	}
 
 
 	WeatherPriv::~WeatherPriv() {
 
+	}
+
+
+	void WeatherPriv::DataReceived(void* context, char* data, size_t len, enum HttpsClientCode code) {
+		WeatherPriv* self = static_cast<WeatherPriv*>(context);
+		pthread_mutex_lock(&self->mutex);
+		self->ApplyData(data, len, code);
+		pthread_mutex_unlock(&self->mutex);
 	}
 
 
@@ -86,7 +98,6 @@ namespace Weather {
 
 	void WeatherPriv::UpdateWeather() {
 		HttpsClient http_client;
-		char buf[1024];
 
 		LoadConfig();
 
@@ -104,11 +115,14 @@ namespace Weather {
 		ESP_LOGI(TAG, "url:%s", url.c_str());
 		ESP_LOGI(TAG, "path:%s", path.c_str());
 
-    	http_client.GetRequest(WEB_SERVER, url.c_str(), path.c_str(), buf, 1024);
-		ESP_LOGI(TAG, "data:%s", buf);
+    	http_client.Request(HttpMethod::GET, WEB_SERVER, url.c_str(), path.c_str(), NULL, this, DataReceived);
+	}
 
+
+	void WeatherPriv::ApplyData(char* data, size_t len, enum HttpsClientCode code) {
 		jparse_ctx_t jparse_ctx;
-		if (json_parse_start(&jparse_ctx, buf, strlen(buf)) != OS_SUCCESS) {
+		ESP_LOGI(TAG, "data:%s", data);
+		if (json_parse_start(&jparse_ctx, data, strlen(data)) != OS_SUCCESS) {
 			ESP_LOGI(TAG, "json parse error\n");
 			return;
 		}
@@ -133,8 +147,6 @@ namespace Weather {
 		}
 
 		json_parse_end(&jparse_ctx);
-		
-		return;
 	}
 
 

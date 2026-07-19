@@ -28,6 +28,6 @@ void mytest(void) {
 //		.crt_bundle_attach = esp_crt_bundle_attach,
 //    };
   HttpsClient http_client;
-  http_client.GetRequest(WEB_SERVER, WEB_URL, WEB_PATH, buf, 512);
-  ESP_LOGI(TAG, "mytest:%s", buf);
+  http_client.Request(HttpMethod::GET, WEB_SERVER, WEB_URL, WEB_PATH, NULL, NULL, NULL);
+  //ESP_LOGI(TAG, "mytest:%s", buf);
 }

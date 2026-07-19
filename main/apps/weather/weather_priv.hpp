@@ -7,6 +7,7 @@
 
 #include "jsmn.h"
 #include "weather.hpp"
+#include "http.hpp"
 
 #define OPEN_METEO_URL "https://api.open-meteo.com/"
 
@@ -48,6 +49,8 @@ namespace Weather {
 	};
 	
 	class WeatherPriv {
+		static void DataReceived(void* context, char* data, size_t len, enum HttpsClientCode code);
+
 	public:
 		WeatherPriv();
 
@@ -56,6 +59,8 @@ namespace Weather {
 		void Notify(const AppMsg& msg);
 
 		void UpdateWeather();
+
+		void ApplyData(char* data, size_t len, enum HttpsClientCode code);
 
 		void SetLocation(City city);
 
@@ -68,6 +73,8 @@ namespace Weather {
 		WeatherModel model;
 		
 		CurrentWeatherComponent* current_weather_component;
+
+		pthread_mutex_t mutex;
 	};
 }
 

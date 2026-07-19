@@ -14,6 +14,7 @@
 #include "sdkconfig.h"
 #include "network.hpp"
 #include "nvs_flash.h"
+#include "http.hpp"
 #include "app_mng.hpp"
 #include "alarm.hpp"
 #include "weather.hpp"
@@ -64,6 +65,8 @@ void app_main(void)
     setenv("TZ", "JST-9", 1);
     tzset();
 
+    HttpsTaskInit();
+    
 #if CONFIG_BSP_DISPLAY_LVGL_AVOID_TEAR
     ESP_LOGI(TAG, "Avoid lcd tearing effect");
 #if CONFIG_BSP_DISPLAY_LVGL_FULL_REFRESH

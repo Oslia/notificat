@@ -1,0 +1,38 @@
+# Default-deny: only the project sources, assets, and shared configuration
+# explicitly unignored below are versioned.
+/*
+
+# Repository metadata
+!/.gitignore
+!/README.md
+
+# ESP-IDF project configuration
+!/CMakeLists.txt
+!/CMakePresets.json
+!/dependencies.lock
+!/partitions.csv
+!/sdkconfig
+!/sdkconfig.defaults
+!/pytest_blink.py
+
+# Application source and component declarations
+!/main/
+!/main/**
+
+# Bundled application resources and flash-storage contents
+!/rsc/
+!/rsc/**
+!/storage/
+!/storage/**
+
+# Reproducible development-environment configuration
+!/.devcontainer/
+/.devcontainer/*
+!/.devcontainer/devcontainer.json
+!/.devcontainer/Dockerfile
+!/.devcontainer/docker-compose.yml
+!/.devcontainer/docker-compose.yaml
+!/.devcontainer/entrypoint.sh
+!/.vscode/
+/.vscode/*
+!/.vscode/*.json

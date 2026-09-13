@@ -8,7 +8,9 @@
 #include "esp_vfs_fat.h"
 #include "nvs_flash.h"
 #include "lvgl.h"
-#include "lv_demos.h"
+#include "core/SystemBootstrap.h"
+#include "ui/AppShell.hpp"
+#include "ui/SplashScreen.hpp"
 
 static const char *TAG = "notificat";
 const char *base_path = "/spiflash";
@@ -19,6 +21,7 @@ static wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
  * when FreeType is enabled, exceeds that during rendering.
  */
 #define LVGL_TASK_STACK_SIZE 12288
+#define SPLASH_SCREEN_DURATION_MS 1500
 
 void app_main(void)
 {
@@ -31,7 +34,7 @@ void app_main(void)
             .disk_status_check_enable = false,
             .use_one_fat = false,
     };
-    
+
     esp_err_t err = esp_vfs_fat_spiflash_mount_rw_wl(base_path, "storage", &mount_config, &s_wl_handle);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to mount FATFS (%s)", esp_err_to_name(err));
@@ -39,7 +42,7 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(nvs_flash_init());
 
-    /* Initialize display and LVGL with a stack suitable for the music demo. */
+    /* Initialize display and LVGL with headroom for application screens and fonts. */
     bsp_display_cfg_t display_cfg = {
         .lvgl_port_cfg = ESP_LVGL_PORT_INIT_CONFIG(),
         .buffer_size = BSP_LCD_H_RES * CONFIG_BSP_LCD_DRAW_BUF_HEIGHT,
@@ -48,6 +51,7 @@ void app_main(void)
 #endif
         .flags = {
             .buff_dma = true,
+            /* SPI transfers use these smaller buffers directly from DMA-capable SRAM. */
             .buff_spiram = false,
             .sw_rotate = false,
         },
@@ -59,11 +63,20 @@ void app_main(void)
         return;
     }
     bsp_display_backlight_on();
-    
+
     bsp_display_lock(0);
-    lv_demo_music(); /* スマートフォン風音楽プレーヤーデモ */
-    // lv_demo_stress();       /* LVGL ストレステストデモ */
-    // lv_demo_benchmark();    /* LVGL 性能ベンチマークデモ */
+    app_splash_show();
+    bsp_display_unlock();
+
+    const esp_err_t system_result = system_bootstrap_init();
+    if (system_result != ESP_OK) {
+        ESP_LOGE(TAG, "System initialization failed: %s", esp_err_to_name(system_result));
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(SPLASH_SCREEN_DURATION_MS));
+
+    bsp_display_lock(0);
+    app_shell_init();
     bsp_display_unlock();
 
     while (1) {

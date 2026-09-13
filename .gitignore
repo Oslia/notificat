@@ -5,6 +5,8 @@
 # Repository metadata
 !/.gitignore
 !/README.md
+!/docs/
+!/docs/**
 
 # ESP-IDF project configuration
 !/CMakeLists.txt

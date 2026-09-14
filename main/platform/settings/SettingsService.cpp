@@ -7,6 +7,7 @@ namespace {
 constexpr char kSettingsNamespace[] = "system";
 constexpr char kRegionKey[] = "region";
 
+/* POSIX TZ は符号が逆表記のため、JST-9/KST-9 が UTC+9 を意味する。 */
 constexpr RegionInfo kRegions[] = {
     {"Tokyo", "JST-9", 35.6762, 139.6503},
     {"Osaka", "JST-9", 34.6937, 135.5023},
@@ -83,6 +84,7 @@ esp_err_t SettingsService::set_region(uint8_t index)
     }
     nvs_close(handle);
 
+    /* NVS の commit 成功後だけ RAM と購読側へ新しい地域を反映する。 */
     if (result == ESP_OK) {
         selected_region_ = index;
         if (event_bus_ != nullptr) {

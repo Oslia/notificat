@@ -51,6 +51,7 @@ bool read_wav_info(FILE *file, WavInfo &info)
         return false;
     }
 
+    /* fmt/data の順序や追加チャンクを仮定せず、RIFF チャンクを順に探索する。 */
     bool format_valid = false;
     bool data_found = false;
     uint8_t chunk_header[8]{};
@@ -83,6 +84,7 @@ bool read_wav_info(FILE *file, WavInfo &info)
             return true;
         }
 
+        /* RIFF チャンクは奇数バイトの場合にパディングを 1 バイト持つ。 */
         const uint64_t next_offset = static_cast<uint64_t>(chunk_offset)
             + chunk_size + (chunk_size & 1U);
         if (next_offset > static_cast<uint64_t>(std::numeric_limits<long>::max())
@@ -107,6 +109,7 @@ void CoreS3AlarmOutput::set_active(bool active)
     active_.store(active, std::memory_order_release);
 
     if (active && task_ == nullptr) {
+        /* 起動時のメモリを温存するため、音声タスクは最初の鳴動時に生成する。 */
         TaskHandle_t task_handle = nullptr;
         if (xTaskCreate(task_entry, "alarm_audio", kOutputTaskStackSize,
                         this, 4, &task_handle) != pdPASS) {
@@ -133,6 +136,7 @@ bool CoreS3AlarmOutput::open_speaker()
     }
     auto speaker = static_cast<esp_codec_dev_handle_t>(speaker_);
     if (speaker == nullptr) {
+        /* コーデックも鳴動時まで初期化せず、通常画面用のメモリを確保しておく。 */
         speaker = bsp_audio_codec_speaker_init();
         speaker_ = speaker;
     }
@@ -187,6 +191,7 @@ bool CoreS3AlarmOutput::play_alarm_file()
         }
 
         uint32_t remaining = wav.data_size;
+        /* 小分けに転送し、停止要求をチャンク間で速やかに反映する。 */
         while (remaining > 0 && active_.load(std::memory_order_acquire)) {
             const size_t requested = remaining < sizeof(samples) ? remaining : sizeof(samples);
             const size_t read = std::fread(samples, 1, requested, file);
@@ -259,6 +264,7 @@ void CoreS3AlarmOutput::run()
             play_fallback_tone();
         }
 
+        /* コーデック内部に残った最後のサンプルを無音で上書きする。 */
         esp_codec_dev_write(speaker, silence, sizeof(silence));
     }
 }

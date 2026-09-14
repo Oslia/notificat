@@ -10,6 +10,7 @@ class WeatherService;
 class WifiService;
 
 struct AppContext {
+    /* 所有権は SystemManager にあり、各 App は参照だけを保持する。 */
     AlarmService &alarms;
     NotificationService &notifications;
     SettingsService &settings;

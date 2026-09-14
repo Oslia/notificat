@@ -183,7 +183,7 @@ void WifiSettingsView::update()
         UiTheme::apply_button(button);
         lv_obj_add_event_cb(button, network_selected_cb, LV_EVENT_CLICKED, this);
         lv_obj_t *label = lv_label_create(button);
-        /* The SSID is retained separately so punctuation in the status text is harmless. */
+        /* SSID は別に保持し、状態表示用の文字列から復元しない。 */
         lv_label_set_text(label, network.ssid);
         lv_obj_align(label, LV_ALIGN_LEFT_MID, 8, 0);
         lv_obj_t *detail = lv_label_create(button);
@@ -310,7 +310,7 @@ void WifiSettingsView::show_password_form()
     lv_label_set_text(connect_label, "Connect");
     lv_obj_center(connect_label);
 
-    /* This layer is above the global bottom-edge gesture target. */
+    /* グローバルな下端ジェスチャーより手前に置き、キー入力を確実に受け取る。 */
     keyboard_ = lv_keyboard_create(lv_layer_top());
     lv_keyboard_set_textarea(keyboard_, password_input_);
     lv_keyboard_set_mode(keyboard_, LV_KEYBOARD_MODE_NUMBER);

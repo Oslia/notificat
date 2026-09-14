@@ -21,6 +21,7 @@ void AppManager::init(AppContext &context)
 void AppManager::activate(AppId id, lv_obj_t *content)
 {
     if (active_app_ != nullptr) {
+        /* 子オブジェクトを削除する前に、App 側のタイマーと参照を破棄させる。 */
         active_app_->onLeave();
     }
 

@@ -48,7 +48,7 @@ esp_err_t SystemManager::init()
                          CoreS3AlarmOutput::instance(), context_.events);
     context_.weather.init(settings.region(), OpenMeteoProvider::instance(),
                           context_.wifi, context_.events);
-    // Driver setup is short; association and all subsequent events remain asynchronous.
+    /* ドライバ初期化だけをここで行い、接続処理と後続イベントは非同期で進める。 */
     context_.wifi.set_connected_callback(wifi_connected, this);
     last_error_ = context_.wifi.init(context_.events);
     if (last_error_ != ESP_OK) {

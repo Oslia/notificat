@@ -6,7 +6,8 @@
 
 namespace {
 
-constexpr std::time_t kEarliestValidTime = 1704067200; // 2024-01-01 UTC
+/* 未同期時の初期値を実時刻と誤認しないための妥当性判定境界。 */
+constexpr std::time_t kEarliestValidTime = 1704067200; // 2024年1月1日 00:00:00 UTC
 
 } // namespace
 
@@ -45,6 +46,7 @@ esp_err_t TimeService::start_time_sync()
 
     sync_state_.store(TimeSyncState::Synchronizing);
     esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
+    /* 接続コールバックをブロックせず、完了は time_sync_cb から通知する。 */
     config.wait_for_sync = false;
     config.sync_cb = &TimeService::time_sync_cb;
     const esp_err_t result = esp_netif_sntp_init(&config);

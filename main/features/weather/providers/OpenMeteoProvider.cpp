@@ -34,6 +34,7 @@ esp_err_t http_event_handler(esp_http_client_event_t *event)
 
     auto *buffer = static_cast<ResponseBuffer *>(event->user_data);
     const size_t incoming = static_cast<size_t>(event->data_len);
+    /* 末尾の NUL 用に 1 バイト残し、想定外に大きい応答は切り詰めず失敗させる。 */
     if (buffer == nullptr || buffer->size + incoming >= buffer->capacity) {
         if (buffer != nullptr) {
             buffer->overflow = true;
@@ -151,6 +152,7 @@ bool parse_hourly(cJSON *root, WeatherForecastData &forecast)
 
     const int available = std::min({cJSON_GetArraySize(times), cJSON_GetArraySize(temperatures),
                                     cJSON_GetArraySize(weather_codes), cJSON_GetArraySize(precipitation)});
+    /* API の 1 時間データから 3 時間ごとの表示点だけを抽出する。 */
     for (int source = 0; source < available && forecast.hourly_count < kWeatherHourlyCount; source += 3) {
         double time = 0;
         double temperature = 0;
@@ -203,6 +205,7 @@ bool parse_daily(cJSON *root, WeatherForecastData &forecast)
         }
 
         DailyWeather &item = forecast.daily[forecast.daily_count++];
+        /* WeatherApp 側で gmtime_r() を使っても地域の日付になるよう補正する。 */
         item.local_date = static_cast<int64_t>(time) + offset;
         item.minimum_temperature_c = static_cast<float>(minimum);
         item.maximum_temperature_c = static_cast<float>(maximum);
@@ -245,6 +248,7 @@ esp_err_t OpenMeteoProvider::fetch(const WeatherLocation &location, WeatherForec
     }
 
     ResponseBuffer response{};
+    /* LCD の DMA バッファ用内部 SRAM を圧迫しないよう、応答は PSRAM を優先する。 */
     response.data = static_cast<char *>(heap_caps_malloc(kResponseCapacity,
                                                          MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
     if (response.data == nullptr) {

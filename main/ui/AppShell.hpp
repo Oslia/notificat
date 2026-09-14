@@ -1,6 +1,6 @@
 #pragma once
 
-/* Call while holding the LVGL lock. */
+/* LVGL ロックを保持した状態で呼び出すこと。 */
 #ifdef __cplusplus
 extern "C" {
 #endif

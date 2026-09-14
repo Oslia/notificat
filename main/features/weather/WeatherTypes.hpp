@@ -36,7 +36,7 @@ struct HourlyWeather {
 };
 
 struct DailyWeather {
-    // Local calendar date represented as a UTC timestamp for formatting with gmtime_r().
+    /* gmtime_r() で地域の日付を得られるよう、ローカル日付を UTC 形式の値で保持する。 */
     int64_t local_date = 0;
     float minimum_temperature_c = 0;
     float maximum_temperature_c = 0;

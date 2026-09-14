@@ -76,6 +76,7 @@ void apply_muted_text(lv_obj_t *object)
 void enable_scroll(lv_obj_t *object, lv_dir_t direction)
 {
     lv_obj_add_flag(object, LV_OBJ_FLAG_SCROLLABLE);
+    /* 低性能端末で余分な慣性描画と親へのスクロール伝播を発生させない。 */
     lv_obj_clear_flag(object, LV_OBJ_FLAG_SCROLL_ELASTIC);
     lv_obj_clear_flag(object, LV_OBJ_FLAG_SCROLL_MOMENTUM);
     lv_obj_clear_flag(object, LV_OBJ_FLAG_SCROLL_CHAIN_HOR);

@@ -77,6 +77,7 @@ esp_err_t WifiService::init(SystemEventBus &events)
     if (result != ESP_OK) {
         return result;
     }
+    /* 再起動後も自動接続できるよう、選択した AP 設定は Wi-Fi ドライバに保存する。 */
     result = esp_wifi_set_storage(WIFI_STORAGE_FLASH);
     if (result != ESP_OK) {
         return result;
@@ -131,6 +132,7 @@ esp_err_t WifiService::scan()
     xSemaphoreGive(static_cast<SemaphoreHandle_t>(mutex_));
     publish_changed();
 
+    /* UI と LVGL タスクを止めないようスキャン完了はイベントで受け取る。 */
     const esp_err_t result = esp_wifi_scan_start(nullptr, false);
     if (result != ESP_OK) {
         xSemaphoreTake(static_cast<SemaphoreHandle_t>(mutex_), portMAX_DELAY);
@@ -160,6 +162,7 @@ esp_err_t WifiService::connect(const char *ssid, const char *password)
 
     xSemaphoreTake(static_cast<SemaphoreHandle_t>(mutex_), portMAX_DELAY);
     const bool was_connected = snapshot_.connection_state == WifiConnectionState::Connected;
+    /* AP 切替時に自分で発生させる切断イベントを接続失敗として扱わない。 */
     ignore_next_disconnect_ = was_connected;
     snapshot_.connection_state = WifiConnectionState::Connecting;
     snapshot_.last_error = WifiError::None;
@@ -250,6 +253,7 @@ void WifiService::handle_event(esp_event_base_t event_base, int32_t event_id)
             snapshot_.networks[index].secured = records[index].authmode != WIFI_AUTH_OPEN;
         }
         snapshot_.scan_in_progress = false;
+        /* UI は世代番号が変わった時だけネットワーク一覧を再構築する。 */
         snapshot_.network_generation++;
         xSemaphoreGive(static_cast<SemaphoreHandle_t>(mutex_));
         publish_changed();
@@ -278,6 +282,7 @@ void WifiService::handle_event(esp_event_base_t event_base, int32_t event_id)
     publish_changed();
 
     if (should_start_time_sync) {
+        /* コールバック先で別サービスを操作するため、Wi-Fi の mutex は先に解放する。 */
         if (connected_callback_ != nullptr) {
             connected_callback_(connected_callback_context_);
         }

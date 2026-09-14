@@ -1,6 +1,6 @@
 #pragma once
 
-/* Shows the boot splash. Call while holding the LVGL lock. */
+/* 起動スプラッシュを表示する。LVGL ロックを保持した状態で呼び出すこと。 */
 #ifdef __cplusplus
 extern "C" {
 #endif

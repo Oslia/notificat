@@ -32,6 +32,7 @@ struct StoredAlarm {
     uint8_t repeat_days;
 };
 
+/* NVS 上のバイナリ形式。既存データとの互換性なしに並びや型を変更しないこと。 */
 struct StoredSchedule {
     uint32_t magic;
     uint16_t version;
@@ -136,6 +137,7 @@ esp_err_t AlarmService::add(uint8_t hour, uint8_t minute, uint8_t repeat_days)
     update_counts_locked();
     const esp_err_t result = save_locked();
     if (result != ESP_OK) {
+        /* 永続化に失敗した場合、RAM 上の状態も保存前へ戻して食い違いを防ぐ。 */
         --snapshot_.alarm_count;
         snapshot_.alarms[snapshot_.alarm_count] = {};
         next_id_ = previous_next_id;
@@ -170,6 +172,7 @@ esp_err_t AlarmService::update(uint32_t id, uint8_t hour, uint8_t minute, uint8_
     last_trigger_minute_[index] = 0;
     const esp_err_t result = save_locked();
     if (result != ESP_OK) {
+        /* NVS と公開スナップショットは常に同じ設定を表す。 */
         snapshot_.alarms[index] = previous_alarm;
         last_trigger_minute_[index] = previous_trigger;
     }
@@ -354,6 +357,7 @@ void AlarmService::run()
         }
 
         const int64_t now = static_cast<int64_t>(std::time(nullptr));
+        /* 1 秒周期で確認しても、同じアラームを同一分内で複数回鳴らさない。 */
         const int64_t minute_key = now / 60;
         bool start_output = false;
         bool stop_output = false;
@@ -385,6 +389,7 @@ void AlarmService::run()
             triggered_alarm.minute = snapshot_.active_minute;
         } else if (!snapshot_.ringing) {
             int first_match = -1;
+            /* 同時刻の候補はすべて処理済みにし、音を鳴らすのは先頭の一件だけにする。 */
             for (uint8_t index = 0; index < snapshot_.alarm_count; ++index) {
                 const AlarmItem &alarm = snapshot_.alarms[index];
                 if (alarm.enabled && alarm.hour == system_time.local.tm_hour
@@ -402,6 +407,7 @@ void AlarmService::run()
             if (first_match >= 0) {
                 triggered_alarm = snapshot_.alarms[first_match];
                 if (triggered_alarm.repeat_days == 0) {
+                    /* 曜日未指定は一回限りとし、鳴動開始前に無効化を保存する。 */
                     snapshot_.alarms[first_match].enabled = false;
                     update_counts_locked();
                     snapshot_.last_error = save_locked();
@@ -417,6 +423,7 @@ void AlarmService::run()
         }
         xSemaphoreGive(static_cast<SemaphoreHandle_t>(mutex_));
 
+        /* 音声出力と通知は時間がかかり得るため、サービスの mutex 外で実行する。 */
         if (stop_output) {
             output_->set_active(false);
         }
@@ -491,6 +498,7 @@ esp_err_t AlarmService::load_locked()
         target.id = source.id;
         target.hour = source.hour;
         target.minute = source.minute;
+        /* v1 には曜日設定がないため、従来動作の毎日に移行する。 */
         target.repeat_days = stored.version == kLegacyStorageVersion
                                  ? kAlarmEveryDay
                                  : source.repeat_days;

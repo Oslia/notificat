@@ -54,6 +54,7 @@ void hide_app_selector()
         return;
     }
 
+    /* 同じオブジェクトを操作中のアニメーションを止め、二重完了を防ぐ。 */
     lv_anim_delete(s_app_selector_sheet, set_object_y);
     lv_anim_t animation;
     lv_anim_init(&animation);
@@ -83,6 +84,7 @@ void activate_app(AppId id)
 
 void app_selector_event_cb(lv_event_t *event)
 {
+    /* AppId は小さな列挙値であり、コールバック用データとして所有権なしで渡す。 */
     const auto id = static_cast<AppId>(reinterpret_cast<intptr_t>(lv_event_get_user_data(event)));
     activate_app(id);
 }
@@ -159,6 +161,7 @@ void app_selector_touch_event_cb(lv_event_t *event)
 
     switch (lv_event_get_code(event)) {
     case LV_EVENT_PRESSED: {
+        /* リストを先頭まで戻した時だけ下スワイプを閉じる操作として扱う。 */
         if (s_app_selector_sheet == nullptr || lv_obj_get_scroll_top(s_app_selector_sheet) != 0) {
             break;
         }
@@ -305,6 +308,7 @@ void update_alarm_overlay()
             s_app_selector_sheet = nullptr;
         }
 
+        /* アラーム操作はステータスバーやランチャーより常に手前へ表示する。 */
         s_alarm_overlay = lv_obj_create(lv_layer_top());
         lv_obj_set_size(s_alarm_overlay, lv_pct(100), lv_pct(100));
         lv_obj_set_pos(s_alarm_overlay, 0, 0);
@@ -357,6 +361,7 @@ void status_timer_cb(lv_timer_t *timer)
         return;
     }
 
+    /* サービス側は LVGL を触らず、UI タイマー上でイベントを画面へ反映する。 */
     const SystemEventMask events = s_context->events.consume();
     if (events == 0) {
         return;

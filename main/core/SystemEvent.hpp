@@ -29,11 +29,13 @@ class SystemEventBus {
 public:
     void publish(SystemEvent event)
     {
+        /* 同種イベントは集約する。UI が必要とするのは回数ではなく最新状態である。 */
         pending_.fetch_or(system_event_mask(event), std::memory_order_release);
     }
 
     SystemEventMask consume()
     {
+        /* 取得とクリアを一操作にし、別タスクからの publish を取りこぼさない。 */
         return pending_.exchange(0, std::memory_order_acq_rel);
     }
 

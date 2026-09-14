@@ -38,6 +38,7 @@ void NotificationService::post(const char *message)
         return;
     }
     xSemaphoreTake(static_cast<SemaphoreHandle_t>(mutex_), portMAX_DELAY);
+    /* 長時間未読でも uint8_t を周回させず、最大値で飽和させる。 */
     if (snapshot_.unread_count < UINT8_MAX) {
         ++snapshot_.unread_count;
     }

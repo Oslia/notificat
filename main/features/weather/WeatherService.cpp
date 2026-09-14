@@ -78,6 +78,7 @@ void WeatherService::set_region(const RegionInfo &region)
 void WeatherService::request_refresh()
 {
     if (task_ != nullptr) {
+        /* 通知は更新要求をキュー化せず、待機中のワーカーを起こす用途に限定する。 */
         xTaskNotifyGive(static_cast<TaskHandle_t>(task_));
     }
 }
@@ -117,6 +118,7 @@ void WeatherService::run()
 
         WeatherLocation requested_location{};
         uint32_t requested_generation = 0;
+        /* HTTPS 通信中はロックを保持しないため、要求条件だけをコピーする。 */
         xSemaphoreTake(static_cast<SemaphoreHandle_t>(mutex_), portMAX_DELAY);
         requested_location = location_;
         requested_generation = location_generation_;
@@ -130,6 +132,7 @@ void WeatherService::run()
 
         xSemaphoreTake(static_cast<SemaphoreHandle_t>(mutex_), portMAX_DELAY);
         if (requested_generation != location_generation_) {
+            /* 通信中に地域が変わった場合、古い地域の応答を公開しない。 */
             xSemaphoreGive(static_cast<SemaphoreHandle_t>(mutex_));
             wait_time = 0;
             continue;

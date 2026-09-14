@@ -17,8 +17,8 @@ const char *base_path = "/spiflash";
 static wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
 
 /*
- * The BSP default for taskLVGL is 7168 bytes. LVGL's music demo, especially
- * when FreeType is enabled, exceeds that during rendering.
+ * BSP 標準の taskLVGL は 7168 バイトだが、FreeType を含む画面描画では
+ * スタックが不足するため、アプリ画面用の余裕を持たせる。
  */
 #define LVGL_TASK_STACK_SIZE 12288
 #define SPLASH_SCREEN_DURATION_MS 1500
@@ -26,7 +26,7 @@ static wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
 void app_main(void)
 {
     ESP_LOGI(TAG, "Mounting FAT filesystem");
-    // Do not erase the bundled storage image or future user settings on a mount failure.
+    /* マウント失敗時に同梱リソースやユーザー設定を消去しない。 */
     const esp_vfs_fat_mount_config_t mount_config = {
             .format_if_mount_failed = false,
             .max_files = 4,
@@ -42,7 +42,7 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(nvs_flash_init());
 
-    /* Initialize display and LVGL with headroom for application screens and fonts. */
+    /* アプリ画面とフォントの使用量を見込み、LVGL 用メモリに余裕を持たせる。 */
     bsp_display_cfg_t display_cfg = {
         .lvgl_port_cfg = ESP_LVGL_PORT_INIT_CONFIG(),
         .buffer_size = BSP_LCD_H_RES * CONFIG_BSP_LCD_DRAW_BUF_HEIGHT,
@@ -51,7 +51,7 @@ void app_main(void)
 #endif
         .flags = {
             .buff_dma = true,
-            /* SPI transfers use these smaller buffers directly from DMA-capable SRAM. */
+            /* SPI 転送バッファは DMA 対応の内部 SRAM に置く必要がある。 */
             .buff_spiram = false,
             .sw_rotate = false,
         },

@@ -22,10 +22,10 @@ ui -> features -> platform
 
 ## 新しいアプリ機能の追加手順
 
-例として `Calendar` を追加する場合:
+例として `Timer` を追加する場合:
 
-1. `main/features/calendar/` に状態モデルと `CalendarService` を作成する。
-2. `main/features/calendar/ui/` に `CalendarApp` を作成し、`App` を継承する。
+1. `main/features/timer/` に状態モデルと `TimerService` を作成する。
+2. `main/features/timer/ui/` に `TimerApp` を作成し、`App` を継承する。
 3. 必要なサービス参照を `AppContext` に追加する。
 4. `AppManager` がアプリを静的に所有し、`AppRegistry::add()` を一度呼ぶ。
 5. ソースファイルを `main/CMakeLists.txt` に追加する。

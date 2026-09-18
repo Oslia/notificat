@@ -98,9 +98,6 @@ RUN : \
   && rm -rf $IDF_TOOLS_PATH/dist \
   && :
 
-# Add get_idf as alias
-RUN echo 'alias get_idf=". /opt/esp/idf/export.sh"' >> /root/.bashrc
-
 # The constraint file has been downloaded and the right Python package versions installed. No need to check and
 # download this at every invocation of the container.
 ENV IDF_PYTHON_CHECK_CONSTRAINTS=no
@@ -109,20 +106,13 @@ ENV IDF_PYTHON_CHECK_CONSTRAINTS=no
 ENV IDF_CCACHE_ENABLE=1
 
 COPY entrypoint.sh /opt/esp/entrypoint.sh
-RUN chmod +x /opt/esp/entrypoint.sh
-
-#RUN chmod -R 775 /opt/esp/python_env/
-RUN chmod -R 775 /opt/esp/
-#RUN groupadd --gid $USER_GID $CONTAINER_USER \
-#  && adduser --uid $USER_UID --gid $USER_GID --disabled-password --gecos "" ${CONTAINER_USER} \
-#  && usermod -a -G root $CONTAINER_USER && usermod -a -G dialout $CONTAINER_USER
-RUN usermod -a -G root $CONTAINER_USER && usermod -a -G dialout $CONTAINER_USER
-  #chmod a+rw /dev/ttyACM
+RUN chmod +x /opt/esp/entrypoint.sh \
+    && chown -R ${USER_UID}:${USER_GID} /opt/esp \
+    && usermod -a -G dialout ${CONTAINER_USER}
 
 USER ${CONTAINER_USER}
 ENV USER=${CONTAINER_USER}
 
-RUN /opt/esp/idf/install.sh all
 RUN echo "source /opt/esp/idf/export.sh > /dev/null 2>&1" >> ~/.bashrc
 ENTRYPOINT [ "/opt/esp/entrypoint.sh" ]
 CMD [ "/bin/bash" ]

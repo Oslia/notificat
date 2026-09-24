@@ -8,6 +8,7 @@ class SettingsService;
 class TimeService;
 class WeatherService;
 class WifiService;
+class SystemMQTT;
 
 struct AppContext {
     /* 所有権は SystemManager にあり、各 App は参照だけを保持する。 */
@@ -18,4 +19,5 @@ struct AppContext {
     WeatherService &weather;
     WifiService &wifi;
     SystemEventBus &events;
+    SystemMQTT &mqtt;
 };

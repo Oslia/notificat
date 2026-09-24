@@ -6,6 +6,7 @@
 #include "ui/AppShell.hpp"
 #include "ui/UiTheme.hpp"
 #include "core/SystemManager.hpp"
+#include "core/SystemMQTT.hpp"
 #include "features/alarm/AlarmService.hpp"
 #include "platform/network/WifiService.hpp"
 #include "ui/app/AppManager.hpp"
@@ -362,6 +363,8 @@ void status_timer_cb(lv_timer_t *timer)
     }
 
     /* サービス側は LVGL を触らず、UI タイマー上でイベントを画面へ反映する。 */
+    s_context->mqtt.dispatch();
+    system_mqtt_test_poll(s_context->mqtt);
     const SystemEventMask events = s_context->events.consume();
     if (events == 0) {
         return;

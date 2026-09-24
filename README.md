@@ -100,6 +100,8 @@ FATFS イメージはビルド時に `rsc/` から生成され、ファームウ
 - [UI ガイドライン](docs/ui_guidelines.md)
 - [アラーム仕様](docs/alarm.md)
 - [天気連携仕様](docs/weather.md)
+- [アプリ共通 MQTT サービス](docs/mqtt.md)
+- [AWS IoT Core MQTT テスト](docs/mqtt_test.md)
 
 ## 外部データとライセンス
 

@@ -1,4 +1,5 @@
 #include "core/SystemManager.hpp"
+#include "core/SystemMQTT.hpp"
 
 #include "esp_log.h"
 #include "features/alarm/AlarmService.hpp"
@@ -26,7 +27,7 @@ SystemManager::SystemManager()
     : context_{AlarmService::instance(), NotificationService::instance(),
                SettingsService::instance(), TimeService::instance(),
                WeatherService::instance(),
-               WifiService::instance(), event_bus_}
+               WifiService::instance(), event_bus_, SystemMQTT::instance()}
 {
 }
 
@@ -58,6 +59,10 @@ esp_err_t SystemManager::init()
     }
 
     state_ = SystemManagerState::Ready;
+    const esp_err_t mqtt_error = context_.mqtt.init();
+    if (mqtt_error == ESP_OK) system_mqtt_test_init(context_.mqtt);
+    else if (mqtt_error != ESP_ERR_NOT_SUPPORTED)
+        ESP_LOGE(kLogTag, "MQTT init failed: %s", esp_err_to_name(mqtt_error));
     return ESP_OK;
 }
 

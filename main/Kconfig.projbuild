@@ -1,0 +1,26 @@
+menu "Notificat MQTT"
+    config NOTIFICAT_MQTT_ENABLED
+        bool "Enable shared AWS IoT MQTT service"
+        default n
+    config NOTIFICAT_MQTT_TEST
+        bool "Enable AWS IoT MQTT test"
+        select NOTIFICAT_MQTT_ENABLED
+        default n
+        help
+            Run the MQTT test alongside the weather service.
+    if NOTIFICAT_MQTT_ENABLED
+    config NOTIFICAT_MQTT_ENDPOINT
+        string "AWS IoT Data-ATS endpoint hostname (without scheme or port)"
+        default ""
+    config NOTIFICAT_MQTT_CLIENT_ID
+        string "MQTT client ID allowed by the IoT policy"
+        default "notificat-test"
+    config NOTIFICAT_MQTT_TOPIC
+        string "Test publish/subscribe topic (no wildcards)"
+        depends on NOTIFICAT_MQTT_TEST
+        default "notificat/test"
+    config NOTIFICAT_MQTT_NVS_PARTITION
+        string "NVS partition containing cert_key namespace"
+        default "cert_nvs"
+    endif
+endmenu

@@ -4,6 +4,8 @@ idf_component_register(SRCS
                        "ui/UiTheme.cpp"
                        "core/SystemBootstrap.cpp"
                        "core/SystemManager.cpp"
+                       "core/SystemMQTT.cpp"
+                       "core/SystemMQTTTest.cpp"
                        "features/alarm/AlarmService.cpp"
                        "features/alarm/ui/AlarmApp.cpp"
                        "features/home/ui/HomeApp.cpp"

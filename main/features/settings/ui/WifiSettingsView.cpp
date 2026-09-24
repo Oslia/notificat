@@ -79,10 +79,13 @@ void WifiSettingsView::hide()
     root_ = nullptr;
     status_label_ = nullptr;
     network_list_ = nullptr;
+    disconnect_button_ = nullptr;
     password_input_ = nullptr;
     if (keyboard_ != nullptr) {
-        lv_obj_delete(keyboard_);
+        lv_obj_t *keyboard = keyboard_;
         keyboard_ = nullptr;
+        lv_keyboard_set_textarea(keyboard, nullptr);
+        lv_obj_delete(keyboard);
     }
 }
 
@@ -193,16 +196,25 @@ void WifiSettingsView::update()
     }
 }
 
-void WifiSettingsView::show_networks()
+void WifiSettingsView::clear_content()
 {
-    if (keyboard_ != nullptr) {
-        lv_obj_delete(keyboard_);
-        keyboard_ = nullptr;
-    }
-    lv_obj_clean(root_);
+    /* 子の削除でイベントが発生しても、破棄済みオブジェクトを参照させない。 */
+    status_label_ = nullptr;
     password_input_ = nullptr;
     network_list_ = nullptr;
     disconnect_button_ = nullptr;
+    if (keyboard_ != nullptr) {
+        lv_obj_t *keyboard = keyboard_;
+        keyboard_ = nullptr;
+        lv_keyboard_set_textarea(keyboard, nullptr);
+        lv_obj_delete(keyboard);
+    }
+    lv_obj_clean(root_);
+}
+
+void WifiSettingsView::show_networks()
+{
+    clear_content();
 
     lv_obj_t *back = lv_button_create(root_);
     lv_obj_set_size(back, 74, 34);
@@ -256,8 +268,7 @@ void WifiSettingsView::show_networks()
 
 void WifiSettingsView::show_password_form()
 {
-    lv_obj_clean(root_);
-    network_list_ = nullptr;
+    clear_content();
 
     lv_obj_t *title = lv_label_create(root_);
     lv_label_set_text_fmt(title, "Connect to %s", selected_ssid_);

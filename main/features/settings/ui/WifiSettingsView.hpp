@@ -27,6 +27,7 @@ private:
     static void exit_cb(lv_event_t *event);
 
     void update();
+    void clear_content();
     void show_networks();
     void show_password_form();
     void set_keyboard_visible(bool visible);
